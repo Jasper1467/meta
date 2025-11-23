@@ -1,9 +1,9 @@
 #pragma once
 
 #include <iostream>
-#include <meta/core/Platform.hpp>
-#include <meta/core/Format.hpp>
-#include <meta/core/String.hpp>
+#include <meta/base/core/Platform.hpp>
+#include <meta/base/core/Format.hpp>
+#include <meta/base/core/String.hpp>
 
 namespace meta
 {

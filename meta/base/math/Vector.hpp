@@ -1,8 +1,8 @@
 #pragma once
 #include <cmath>
 #include <iostream>
-#include <meta/core/Platform.hpp>
-#include <meta/math/Constants.hpp>
+#include <meta/base/core/Platform.hpp>
+#include <meta/base/math/Constants.hpp>
 
 namespace meta::Math
 {

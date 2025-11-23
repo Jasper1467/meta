@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Timer.hpp"
 #include <chrono>
 #include <iostream>
-#include <meta/core/Platform.hpp>
+#include <meta/base/core/Platform.hpp>
+#include <meta/base/core/Timer.hpp>
 #include <string_view>
 
 namespace meta

@@ -7,7 +7,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <meta/core/Platform.hpp>
+#include <meta/base/core/Platform.hpp>
 #include <string>
 #include <string_view>
 

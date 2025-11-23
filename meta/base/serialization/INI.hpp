@@ -1,8 +1,8 @@
 #pragma once
 
-#include <meta/core/Format.hpp>
-#include <meta/core/String.hpp>
-#include <meta/filesystem/File.hpp>
+#include <meta/base/core/Format.hpp>
+#include <meta/base/core/String.hpp>
+#include <meta/base/filesystem/File.hpp>
 #include <sstream>
 #include <unordered_map>
 

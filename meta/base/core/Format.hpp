@@ -1,6 +1,6 @@
 #pragma once
 
-#include <meta/core/String.hpp>
+#include <meta/base/core/String.hpp>
 #include <sstream>
 #include <type_traits>
 

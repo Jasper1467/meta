@@ -1,8 +1,8 @@
 #pragma once
 
-#include <meta/core/Console.hpp>
-#include <meta/filesystem/Path.hpp>
-#include <meta/serialization/INI.hpp>
+#include <meta/base/core/Console.hpp>
+#include <meta/base/filesystem/Path.hpp>
+#include <meta/base/serialization/INI.hpp>
 
 namespace meta
 {

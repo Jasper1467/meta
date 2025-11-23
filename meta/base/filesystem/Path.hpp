@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <iostream>
-#include <meta/core/String.hpp>
+#include <meta/base/core/String.hpp>
 
 namespace meta
 {

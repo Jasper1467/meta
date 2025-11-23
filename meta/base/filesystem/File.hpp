@@ -2,8 +2,8 @@
 
 #include <fstream>
 #include <ios>
-#include <meta/core/String.hpp>
-#include <meta/filesystem/Path.hpp>
+#include <meta/base/core/String.hpp>
+#include <meta/base/filesystem/Path.hpp>
 
 namespace meta
 {

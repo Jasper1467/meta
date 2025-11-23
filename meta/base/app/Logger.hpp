@@ -4,8 +4,8 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
-#include <meta/core/Console.hpp>
-#include <meta/core/String.hpp>
+#include <meta/base/core/Console.hpp>
+#include <meta/base/core/String.hpp>
 #include <sstream>
 
 namespace meta

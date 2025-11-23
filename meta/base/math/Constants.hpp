@@ -1,6 +1,6 @@
 #pragma once
 
-#include <meta/core/Platform.hpp>
+#include <meta/base/core/Platform.hpp>
 
 namespace meta
 {

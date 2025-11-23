@@ -1,11 +1,13 @@
-#include <meta/app/Logger.hpp>
-#include <meta/app/SettingsManager.hpp>
-#include <meta/core/Console.hpp>
-#include <meta/core/FeatureCheck.hpp>
-#include <meta/core/Format.hpp>
-#include <meta/core/Platform.hpp>
-#include <meta/filesystem/Path.hpp>
-#include <meta/math/Constants.hpp>
+#include <meta/base/app/Logger.hpp>
+#include <meta/base/app/SettingsManager.hpp>
+#include <meta/base/core/Console.hpp>
+#include <meta/base/core/FeatureCheck.hpp>
+#include <meta/base/core/Format.hpp>
+#include <meta/base/core/Platform.hpp>
+#include <meta/base/filesystem/Path.hpp>
+#include <meta/base/math/Constants.hpp>
+
+
 
 int main()
 {
