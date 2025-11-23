@@ -10,13 +10,13 @@
 #include <meta/gui/Button.hpp>
 #include <meta/gui/HorizontalLayout.hpp>
 #include <meta/gui/Label.hpp>
+#include <meta/gui/Slider.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/VerticalLayout.hpp>
 #include <meta/gui/Window.hpp>
 
 int main()
 {
-    // --- Base functionality ---
     int x = 42;
     double pi = meta::PI;
     meta::String<> name("Alice");
@@ -74,6 +74,8 @@ int main()
 
     meta::gui::Label label1("Label 1");
 
+    meta::gui::Slider slider1("Slider 1");
+
     btn1.setOnClick([&]() { meta::println("Button 1 clicked!"); });
     btn2.setOnClick([&]() { meta::println("Button 2 clicked!"); });
     btn3.setOnClick([&]() { meta::println("Button 3 clicked!"); });
@@ -84,7 +86,8 @@ int main()
 
     nestedLayout->addWidget(&btn3);
     nestedLayout->addWidget(&btn4);
-    nestedLayout->addWidget(&label1); 
+    nestedLayout->addWidget(&label1);
+    nestedLayout->addWidget(&slider1);
 
     mainLayout->addWidget(&btn1);
     mainLayout->addWidget(&btn2);
@@ -92,7 +95,6 @@ int main()
 
     window.setLayout(mainLayout);
 
-    // --- Main loop ---
     window.run(
         [&](bool& running)
         {

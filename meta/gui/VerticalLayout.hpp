@@ -14,41 +14,47 @@ namespace meta::gui
         void updateLayout(int x, int y, int w, int h) override
         {
             int currentY = y + m_padding;
-            int availableWidth = w - 2 * m_padding;
 
-            for (auto* widget : m_widgets)
+            for (auto* wgt : m_widgets)
             {
-                widget->setPosition(x + m_padding, currentY);
-                widget->setSize(availableWidth, widget->getHeight()); // stretch horizontally
-                currentY += widget->getHeight() + m_spacing;
+                int widgetWidth = wgt->getWidth();
+                int widgetHeight = wgt->getHeight();
+                wgt->setPosition(x + m_padding, currentY);
+                wgt->setSize(widgetWidth, widgetHeight);
+                currentY += widgetHeight + m_spacing;
             }
 
-            for (auto& layout : m_childLayouts)
+            for (auto& child : m_childLayouts)
             {
-                layout->updateLayout(x + m_padding, currentY, availableWidth, layout->getHeight());
-                currentY += layout->getHeight() + m_spacing;
+                int childWidth = child->getWidth();
+                int childHeight = child->getHeight();
+                child->updateLayout(x + m_padding, currentY, childWidth, childHeight);
+                currentY += childHeight + m_spacing;
             }
         }
 
         int getWidth() const override
         {
             int width = 0;
-            for (auto* widget : m_widgets)
-                width = std::max(width, widget->getWidth());
-            for (auto& layout : m_childLayouts)
-                width = std::max(width, layout->getWidth());
+            for (auto* wgt : m_widgets)
+                width = std::max(width, wgt->getWidth());
+            for (auto& child : m_childLayouts)
+                width = std::max(width, child->getWidth());
+
             return width + 2 * m_padding;
         }
 
         int getHeight() const override
         {
             int height = 0;
-            for (auto* widget : m_widgets)
-                height += widget->getHeight();
-            for (auto& layout : m_childLayouts)
-                height += layout->getHeight();
+            for (auto* wgt : m_widgets)
+                height += wgt->getHeight();
+            for (auto& child : m_childLayouts)
+                height += child->getHeight();
+
             if (!m_widgets.empty() || !m_childLayouts.empty())
                 height += m_spacing * (m_widgets.size() + m_childLayouts.size() - 1);
+
             return height + 2 * m_padding;
         }
     };

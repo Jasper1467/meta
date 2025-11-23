@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <functional>
 #include <memory>
 #include <meta/base/core/Console.hpp>
 #include <meta/base/core/String.hpp>
@@ -14,7 +15,8 @@ namespace meta::gui
     public:
         Label(const meta::String<>& text = "") : Widget(0, 0, 0, 0), m_text(text)
         {
-            initFont(DEFAULT_THEME.fontPath, DEFAULT_THEME.fontSize);
+            m_theme = std::make_shared<Theme>(DEFAULT_THEME);
+            initFont(m_theme->fontPath, m_theme->fontSize);
             updateSize();
         }
 
@@ -24,12 +26,15 @@ namespace meta::gui
             updateSize();
         }
 
+        void setOnClick(std::function<void()> callback)
+        {
+            m_onClick = callback;
+        }
+
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
-            m_theme = theme;
-            int fontSize = theme ? theme->fontSize : DEFAULT_THEME.fontSize;
-            const auto& fontPath = theme ? theme->fontPath : DEFAULT_THEME.fontPath;
-            initFont(fontPath, fontSize);
+            m_theme = theme ? theme : std::make_shared<Theme>(DEFAULT_THEME);
+            initFont(m_theme->fontPath, m_theme->fontSize);
             updateSize();
         }
 
@@ -38,10 +43,10 @@ namespace meta::gui
             if (!m_visible || !m_font || m_text.empty())
                 return;
 
-            const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
-            SDL_Color textColor = theme.widgetTextColor;
+            const Theme& theme = *m_theme;
+            SDL_Color color = m_hovered ? theme.widgetHoverColor : theme.widgetTextColor;
 
-            SDL_Surface* surface = TTF_RenderText_Blended(m_font, m_text.c_str(), textColor);
+            SDL_Surface* surface = TTF_RenderText_Blended(m_font, m_text.c_str(), color);
             if (!surface)
                 return;
 
@@ -57,6 +62,33 @@ namespace meta::gui
 
             SDL_DestroyTexture(texture);
             SDL_FreeSurface(surface);
+        }
+
+        void handleEvent(const SDL_Event& e) override
+        {
+            if (!m_visible)
+                return;
+
+            int mx = 0, my = 0;
+            if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
+            {
+                mx = e.motion.x;
+                my = e.motion.y;
+                m_hovered = mx >= m_x && mx <= m_x + m_width && my >= m_y && my <= m_y + m_height;
+            }
+
+            if (m_hovered && e.type == SDL_MOUSEBUTTONDOWN)
+                m_pressed = true;
+
+            if (m_hovered && e.type == SDL_MOUSEBUTTONUP)
+            {
+                if (m_pressed && m_onClick)
+                    m_onClick();
+                m_pressed = false;
+            }
+
+            if (e.type == SDL_MOUSEBUTTONUP && !m_hovered)
+                m_pressed = false;
         }
 
     private:
@@ -80,14 +112,16 @@ namespace meta::gui
 
             int w = 0, h = 0;
             if (TTF_SizeText(m_font, m_text.c_str(), &w, &h) == 0)
-            {
                 setSize(w, h);
-            }
         }
 
     private:
         meta::String<> m_text;
         TTF_Font* m_font = nullptr;
         std::shared_ptr<Theme> m_theme;
+
+        bool m_hovered = false;
+        bool m_pressed = false;
+        std::function<void()> m_onClick;
     };
 } // namespace meta::gui

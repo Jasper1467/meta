@@ -29,12 +29,12 @@ namespace meta::gui
             m_theme = theme;
         }
 
-        int getWidth() const
+        virtual int getWidth() const
         {
             return m_width;
         }
 
-        int getHeight() const
+        virtual int getHeight() const
         {
             return m_height;
         }
