@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <memory>
 #include <meta/base/core/String.hpp>
+#include <meta/gui/Theme.hpp>
 
 namespace meta::gui
 {
@@ -64,6 +65,26 @@ namespace meta::gui
         bool m_visible = true;
 
     protected:
+        void drawOutline(SDL_Renderer* renderer, const Theme& theme)
+        {
+            if (!theme.widgetOutlineEnable || theme.widgetOutlineSize <= 0)
+                return;
+
+            SDL_SetRenderDrawColor(renderer, theme.widgetOutlineColor.r, theme.widgetOutlineColor.g,
+                                   theme.widgetOutlineColor.b, theme.widgetOutlineColor.a);
+
+            SDL_Rect rect{ m_x, m_y, m_width, m_height };
+
+            for (int i = 0; i < theme.widgetOutlineSize; ++i)
+            {
+                SDL_RenderDrawRect(renderer, &rect);
+                rect.x += 1;
+                rect.y += 1;
+                rect.w -= 2;
+                rect.h -= 2;
+            }
+        }
+
         int m_width, m_height;
         std::shared_ptr<Theme> m_theme;
     };

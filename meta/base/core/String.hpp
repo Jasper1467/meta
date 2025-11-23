@@ -288,6 +288,23 @@ namespace meta
             return m_runtime ? (*m_runtime)[m_runtime->size() - 1] : m_buffer[m_size - 1];
         }
 
+        void popBack()
+        {
+            if (m_size == 0)
+                return; // nothing to pop
+
+            if (m_runtime) // using heap string
+            {
+                m_runtime->pop_back();
+                --m_size;
+            }
+            else // using small buffer
+            {
+                --m_size;
+                m_buffer[m_size] = '\0'; // clear the last char
+            }
+        }
+
     private:
         size_t m_size = 0;
         std::array<char, N> m_buffer{};
