@@ -26,7 +26,6 @@ namespace meta::gui
                     meta::errorln("Failed to load font: ", TTF_GetError());
             }
 
-            // Default size
             m_width = 120;
             m_height = m_theme->minHeight;
         }
@@ -37,24 +36,21 @@ namespace meta::gui
                 TTF_CloseFont(m_font);
         }
 
+        // Signal for check state changes
+        meta::Signal<bool> stateChanged;
+
         void setChecked(bool value)
         {
             if (m_checked != value)
             {
                 m_checked = value;
-                if (m_onChange)
-                    m_onChange(m_checked);
+                stateChanged.emit(m_checked); // emit signal on change
             }
         }
 
         bool isChecked() const
         {
             return m_checked;
-        }
-
-        void setOnChange(std::function<void(bool)> callback)
-        {
-            m_onChange = callback;
         }
 
         void setTheme(const std::shared_ptr<Theme>& theme) override
@@ -82,9 +78,6 @@ namespace meta::gui
 
             const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
 
-            // Layout:
-            // [ ]  Label text
-
             int boxSize = m_height - theme.padding * 2;
             if (boxSize < 14)
                 boxSize = 14;
@@ -94,7 +87,6 @@ namespace meta::gui
 
             // Draw checkbox background
             SDL_Color bgColor = m_checked ? theme.widgetPressedColor : theme.defaultWidgetColor;
-
             SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
             SDL_Rect boxRect{ boxX, boxY, boxSize, boxSize };
             SDL_RenderFillRect(renderer, &boxRect);
@@ -110,8 +102,6 @@ namespace meta::gui
             // Draw outline using Widget helper
             {
                 int oldX = m_x, oldY = m_y, oldW = m_width, oldH = m_height;
-
-                // Temporarily override widget rect to only outline checkbox
                 m_x = boxX;
                 m_y = boxY;
                 m_width = boxSize;
@@ -130,7 +120,6 @@ namespace meta::gui
             {
                 SDL_SetRenderDrawColor(renderer, theme.widgetTextColor.r, theme.widgetTextColor.g,
                                        theme.widgetTextColor.b, theme.widgetTextColor.a);
-
                 SDL_RenderDrawLine(renderer, boxX + 3, boxY + 3, boxX + boxSize - 4, boxY + boxSize - 4);
                 SDL_RenderDrawLine(renderer, boxX + 3, boxY + boxSize - 4, boxX + boxSize - 4, boxY + 3);
             }
@@ -142,18 +131,14 @@ namespace meta::gui
                 if (surf)
                 {
                     SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
-
                     if (tex)
                     {
                         int textW, textH;
                         SDL_QueryTexture(tex, nullptr, nullptr, &textW, &textH);
-
                         SDL_Rect dst{ boxX + boxSize + theme.padding, m_y + (m_height - textH) / 2, textW, textH };
-
                         SDL_RenderCopy(renderer, tex, nullptr, &dst);
                         SDL_DestroyTexture(tex);
                     }
-
                     SDL_FreeSurface(surf);
                 }
             }
@@ -181,9 +166,7 @@ namespace meta::gui
             {
                 if (m_pressed)
                 {
-                    m_checked = !m_checked;
-                    if (m_onChange)
-                        m_onChange(m_checked);
+                    setChecked(!m_checked); // emits signal automatically
                 }
                 m_pressed = false;
             }
@@ -201,7 +184,5 @@ namespace meta::gui
 
         TTF_Font* m_font = nullptr;
         std::shared_ptr<Theme> m_theme;
-
-        std::function<void(bool)> m_onChange;
     };
 } // namespace meta::gui

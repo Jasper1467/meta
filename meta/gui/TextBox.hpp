@@ -1,4 +1,5 @@
 #pragma once
+
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <meta/base/core/Console.hpp>
@@ -24,6 +25,9 @@ namespace meta::gui
                 meta::errorln("Failed to load font: ", TTF_GetError());
         }
 
+        // Signal emitted whenever the text changes
+        meta::Signal<const meta::String<>&> textChanged;
+
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
             m_theme = theme;
@@ -31,7 +35,11 @@ namespace meta::gui
 
         void setText(const meta::String<>& text)
         {
-            m_text = text;
+            if (m_text != text)
+            {
+                m_text = text;
+                textChanged.emit(m_text);
+            }
         }
 
         const meta::String<>& getText() const
@@ -62,7 +70,7 @@ namespace meta::gui
                 }
             }
 
-            // Draw text box background with border radius
+            // Draw text box background
             SDL_Rect rect{ m_x, m_y + labelHeight, m_width, m_height };
             drawRoundedRect(renderer, rect, theme.defaultWidgetColor, theme.borderRadius);
 
@@ -93,9 +101,15 @@ namespace meta::gui
                 return;
 
             if (e.type == SDL_TEXTINPUT)
+            {
                 m_text += e.text.text;
+                textChanged.emit(m_text);
+            }
             else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_BACKSPACE && !m_text.empty())
+            {
                 m_text.popBack();
+                textChanged.emit(m_text);
+            }
         }
 
         int getWidth() const override
@@ -139,14 +153,10 @@ namespace meta::gui
         TTF_Font* m_font = nullptr;
         std::shared_ptr<Theme> m_theme;
 
-        // Draws a rectangle with rounded corners
         void drawRoundedRect(SDL_Renderer* renderer, const SDL_Rect& rect, const SDL_Color& color, int radius)
         {
             SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-
-            // Simple filled rect for now (SDL2 doesn’t have native rounded rects)
-            // Can later replace with SDL2_gfx or custom implementation
-            SDL_RenderFillRect(renderer, &rect);
+            SDL_RenderFillRect(renderer, &rect); // placeholder for rounded rect
         }
     };
 } // namespace meta::gui

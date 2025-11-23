@@ -24,6 +24,9 @@ namespace meta::gui
                 meta::errorln("Failed to load font: ", TTF_GetError());
         }
 
+        // Signal for value changes
+        meta::Signal<int> valueChanged;
+
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
             m_theme = theme;
@@ -31,7 +34,12 @@ namespace meta::gui
 
         void setValue(int val)
         {
-            m_value = std::clamp(val, m_min, m_max);
+            int clamped = std::clamp(val, m_min, m_max);
+            if (clamped != m_value)
+            {
+                m_value = clamped;
+                valueChanged.emit(m_value); // emit signal on value change
+            }
         }
 
         int getValue() const
@@ -64,8 +72,6 @@ namespace meta::gui
 
             // Slider bar rectangle
             SDL_Rect barRect{ m_x + theme.padding, m_y + labelHeight + theme.padding, m_width - 2 * theme.padding, 6 };
-
-            // Draw slider bar
             drawRect(renderer, barRect, theme.defaultWidgetColor);
 
             // Draw knob
@@ -94,7 +100,7 @@ namespace meta::gui
                 if (mx >= barRect.x && mx <= barRect.x + barRect.w && my >= barRect.y && my <= barRect.y + barRect.h)
                 {
                     m_dragging = true;
-                    m_value = m_min + (mx - barRect.x) * (m_max - m_min) / barRect.w;
+                    setValue(m_min + (mx - barRect.x) * (m_max - m_min) / barRect.w); // use setValue to emit signal
                 }
             }
 

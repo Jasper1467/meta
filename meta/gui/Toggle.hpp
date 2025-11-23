@@ -2,7 +2,6 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include <functional>
 #include <meta/base/core/String.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Transition.hpp>
@@ -14,11 +13,13 @@ namespace meta::gui
     {
     public:
         Toggle(const meta::String<>& label = "", bool initialState = false)
-            : Widget(0, 0, 60, 28), // Desktop-friendly defaults: width=60, height=28
-              m_label(label), m_state(initialState),
+            : Widget(0, 0, 60, 28), m_label(label), m_state(initialState),
               m_knobTransition(initialState ? 1.0f : 0.0f, initialState ? 1.0f : 0.0f, 0.15f)
         {
         }
+
+        // Signal for toggle state changes
+        meta::Signal<bool> toggled;
 
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
@@ -32,6 +33,7 @@ namespace meta::gui
                 m_state = state;
                 m_knobTransition.setRange(m_knobTransition.update(), m_state ? 1.0f : 0.0f);
                 m_knobTransition.reset();
+                toggled.emit(m_state); // emit signal on state change
             }
         }
 
@@ -94,16 +96,9 @@ namespace meta::gui
                 int my = e.button.y;
                 if (mx >= m_x && mx <= m_x + m_width && my >= m_y && my <= m_y + m_height)
                 {
-                    setState(!m_state);
-                    if (m_onToggle)
-                        m_onToggle(m_state);
+                    setState(!m_state); // emit signal inside setState
                 }
             }
-        }
-
-        void setOnToggle(std::function<void(bool)> callback)
-        {
-            m_onToggle = callback;
         }
 
     private:
@@ -111,7 +106,6 @@ namespace meta::gui
         bool m_state;
         Transition m_knobTransition;
         std::shared_ptr<Theme> m_theme;
-        std::function<void(bool)> m_onToggle;
         TTF_Font* m_font = nullptr;
 
         void filledCircle(SDL_Renderer* renderer, int cx, int cy, int radius, SDL_Color color)

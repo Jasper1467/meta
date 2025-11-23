@@ -2,7 +2,6 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include <functional>
 #include <meta/base/core/Console.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Widget.hpp>
@@ -24,10 +23,8 @@ namespace meta::gui
             loadFont();
         }
 
-        void setOnClick(std::function<void()> callback)
-        {
-            m_onClick = callback;
-        }
+        // Remove previous setOnClick; use Widget's clicked Signal
+        // Example usage: myButton.clicked.connect([]{ ... });
 
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
@@ -49,7 +46,7 @@ namespace meta::gui
             else if (m_hovered)
                 bgColor = theme.widgetHoverColor;
 
-            // Draw button rectangle with padding and border radius
+            // Draw button rectangle
             SDL_Rect rect{ m_x, m_y, m_width, m_height };
             drawRoundedRect(renderer, rect, bgColor, theme.borderRadius);
 
@@ -92,8 +89,8 @@ namespace meta::gui
 
             if (m_hovered && e.type == SDL_MOUSEBUTTONUP)
             {
-                if (m_pressed && m_onClick)
-                    m_onClick();
+                if (m_pressed)
+                    clicked.emit(); // emit signal instead of calling m_onClick
                 m_pressed = false;
             }
 
@@ -125,7 +122,6 @@ namespace meta::gui
 
         bool m_hovered = false;
         bool m_pressed = false;
-        std::function<void()> m_onClick;
 
         void loadFont()
         {
@@ -150,7 +146,6 @@ namespace meta::gui
         void drawRoundedRect(SDL_Renderer* renderer, const SDL_Rect& rect, const SDL_Color& color, int radius)
         {
             SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-
             // Placeholder: simple filled rect. Replace with SDL2_gfx or custom for rounded corners.
             SDL_RenderFillRect(renderer, &rect);
         }

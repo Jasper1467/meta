@@ -6,14 +6,14 @@
 #include <meta/base/math/Constants.hpp>
 
 #include <meta/gui/Button.hpp>
+#include <meta/gui/CheckBox.hpp>
 #include <meta/gui/HorizontalLayout.hpp>
 #include <meta/gui/Slider.hpp>
 #include <meta/gui/TextBox.hpp>
 #include <meta/gui/Theme.hpp>
+#include <meta/gui/Toggle.hpp>
 #include <meta/gui/VerticalLayout.hpp>
 #include <meta/gui/Window.hpp>
-#include <meta/gui/CheckBox.hpp>
-#include <meta/gui/Toggle.hpp>
 
 int main()
 {
@@ -26,8 +26,7 @@ int main()
 
     meta::gui::Window window("Nested Layouts with Themed Widgets", 600, 400);
 
-    auto theme = std::make_shared<meta::gui::Theme>(); 
-
+    auto theme = std::make_shared<meta::gui::Theme>();
     window.setTheme(theme);
 
     meta::gui::Button btn1("Button 1");
@@ -40,10 +39,11 @@ int main()
     meta::gui::CheckBox checkBox1("Check box");
     meta::gui::Toggle toggle1("Toggle");
 
-    btn1.setOnClick([&]() { meta::println("Button 1 clicked!"); });
-    btn2.setOnClick([&]() { meta::println("Button 2 clicked!"); });
-    btn3.setOnClick([&]() { meta::println("Button 3 clicked!"); });
-    btn4.setOnClick([&]() { meta::println("Button 4 clicked!"); });
+    // Connect using the new Signal system
+    btn1.clicked.connect([&]() { meta::println("Button 1 clicked!"); });
+    btn2.clicked.connect([&]() { meta::println("Button 2 clicked!"); });
+    btn3.clicked.connect([&]() { meta::println("Button 3 clicked!"); });
+    btn4.clicked.connect([&]() { meta::println("Button 4 clicked!"); });
 
     auto mainLayout = std::make_shared<meta::gui::VerticalLayout>(10, 10);   // spacing, padding
     auto nestedLayout = std::make_shared<meta::gui::HorizontalLayout>(5, 5); // spacing, padding
@@ -61,6 +61,7 @@ int main()
 
     window.setLayout(mainLayout);
 
+    // Run the window
     window.run([&](bool& running) {});
 
     return 0;

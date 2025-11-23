@@ -2,6 +2,7 @@
 
 #include <SDL.h>
 #include <memory>
+#include <meta/base/core/Signal.hpp>
 #include <meta/base/core/String.hpp>
 #include <meta/gui/Theme.hpp>
 
@@ -19,12 +20,37 @@ namespace meta::gui
 
         virtual ~Widget() = default;
 
+        // Signals for common widget events
+        meta::Signal<> clicked;
+        meta::Signal<> hovered;
+        meta::Signal<> focused;
+
         virtual void render(SDL_Renderer* renderer)
         {
         }
 
         virtual void handleEvent(const SDL_Event& e)
         {
+            // Example: detect mouse click inside widget bounds
+            if (e.type == SDL_MOUSEBUTTONDOWN)
+            {
+                int mx = e.button.x;
+                int my = e.button.y;
+                if (mx >= m_x && mx <= m_x + m_width && my >= m_y && my <= m_y + m_height)
+                {
+                    clicked.emit();
+                }
+            }
+            else if (e.type == SDL_MOUSEMOTION)
+            {
+                int mx = e.motion.x;
+                int my = e.motion.y;
+                if (mx >= m_x && mx <= m_x + m_width && my >= m_y && my <= m_y + m_height)
+                {
+                    hovered.emit();
+                }
+            }
+            // Focus handling can be implemented in derived widgets
         }
 
         virtual void setTheme(const std::shared_ptr<Theme>& theme)
@@ -47,6 +73,7 @@ namespace meta::gui
             m_x = x;
             m_y = y;
         }
+
         void setSize(int w, int h)
         {
             m_width = w;
