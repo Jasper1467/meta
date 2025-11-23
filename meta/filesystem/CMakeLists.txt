@@ -1,0 +1,4 @@
+add_library(meta_filesystem INTERFACE)
+target_include_directories(meta_filesystem INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(meta_filesystem INTERFACE meta_core)
+
