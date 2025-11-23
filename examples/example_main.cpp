@@ -1,3 +1,4 @@
+#include <meta/app/Logger.hpp>
 #include <meta/app/SettingsManager.hpp>
 #include <meta/core/Console.hpp>
 #include <meta/core/FeatureCheck.hpp>
@@ -44,6 +45,16 @@ int main()
     double loadedPi = loadedSettings.get<double>("Math", "PI", 0.0);
 
     meta::println("Loaded from SettingsManager: Name=", loadedName, ", Age=", loadedAge, ", PI=", loadedPi);
+
+    meta::Logger logger;
+    logger.setLevel(meta::LogLevel::Debug);
+    logger.includeTimestamps(true);
+    logger.setFile("app.log");
+
+    logger.debug("Debug message with timestamp");
+    logger.info("Application started at x=", 42);
+    logger.warning("This might be risky");
+    logger.error("Something went wrong!");
 
     return 0;
 }
