@@ -9,7 +9,7 @@ target_include_directories(example_main PRIVATE
 target_link_libraries(example_main PRIVATE meta_base)
 
 # Optional: link GUI if needed
-# target_link_libraries(example_main PRIVATE meta_gui)
+target_link_libraries(example_main PRIVATE meta_gui)
 
 # C++ standard
 set_target_properties(example_main PROPERTIES
