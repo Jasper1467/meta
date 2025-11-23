@@ -1,4 +1,5 @@
 #pragma once
+
 #include <SDL.h>
 #include <meta/base/core/Platform.hpp>
 #include <meta/base/core/String.hpp>
@@ -22,6 +23,15 @@ namespace meta::gui
         SDL_Color placeholderTextColor{ 150, 150, 150, 255 }; // For empty textboxes
         SDL_Color selectionColor{ 100, 150, 255, 100 };       // For selected/highlighted text
 
+        // Toggle (Switch) specific theme options
+        SDL_Color toggleOnColor{ 100, 200, 255, 255 };      // Bright blue track when active
+        SDL_Color toggleOffColor{ 180, 180, 180, 255 };     // Gray track when inactive
+        SDL_Color toggleKnobColor{ 255, 255, 255, 255 };    // White knob
+        SDL_Color toggleOutlineColor{ 120, 120, 120, 255 }; // Optional outline
+        int toggleOutlineSize{ 1 };                         // Outline thickness
+        int toggleTrackHeight{ 20 };                        // Default height of switch track
+        int toggleKnobMargin{ 2 };                          // Space inside track for knob
+
         int fontSize = 15;                // Default font size
         int textSpacing{ 4 };             // Spacing between lines of text
         int padding{ 8 };                 // Padding inside widgets
@@ -30,7 +40,7 @@ namespace meta::gui
         int minWidth{ 80 };               // Minimum width for widgets
         int minHeight{ 24 };              // Minimum height for widgets
         int widgetOutlineSize{ 1 };       // Outline thickness for widgets
-        bool widgetOutlineEnable{ true }; // enable/disable outlines globally
+        bool widgetOutlineEnable{ false }; // enable/disable outlines globally
 
         meta::String<> fontPath;
 

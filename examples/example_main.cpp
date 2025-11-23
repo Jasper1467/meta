@@ -13,6 +13,7 @@
 #include <meta/gui/VerticalLayout.hpp>
 #include <meta/gui/Window.hpp>
 #include <meta/gui/CheckBox.hpp>
+#include <meta/gui/Toggle.hpp>
 
 int main()
 {
@@ -37,6 +38,7 @@ int main()
     meta::gui::Slider slider1("Volume");
     meta::gui::TextBox textBox1("Text box");
     meta::gui::CheckBox checkBox1("Check box");
+    meta::gui::Toggle toggle1("Toggle");
 
     btn1.setOnClick([&]() { meta::println("Button 1 clicked!"); });
     btn2.setOnClick([&]() { meta::println("Button 2 clicked!"); });
@@ -50,6 +52,7 @@ int main()
     nestedLayout->addWidget(&btn4);
     nestedLayout->addWidget(&slider1);
     nestedLayout->addWidget(&checkBox1);
+    nestedLayout->addWidget(&toggle1);
 
     mainLayout->addWidget(&btn1);
     mainLayout->addWidget(&btn2);
