@@ -7,7 +7,7 @@
 
 namespace meta
 {
-    // Tag types for durations (compile-time)
+    // Tag types for durations
     struct Seconds
     {
     };
@@ -21,7 +21,7 @@ namespace meta
     {
     };
 
-    template <typename DurationTag = Milliseconds> class Timer
+    template <typename DurationTag = Milliseconds> class META_ALIGN(8) Timer
     {
     public:
         using Clock = std::chrono::high_resolution_clock;
@@ -31,20 +31,20 @@ namespace meta
             reset();
         }
 
-        // Start / reset the timer
-        META_INLINE void reset() noexcept
+        // Start / reset timer
+        META_FORCE_INLINE void reset() noexcept
         {
             m_start = Clock::now();
         }
 
-        // Get elapsed time in the selected duration type
-        META_INLINE double elapsed() const noexcept
+        // Get elapsed time in selected duration
+        META_FORCE_INLINE double elapsed() const noexcept
         {
             auto end = Clock::now();
-            return to_seconds(end - m_start);
+            return to_duration(end - m_start);
         }
 
-        // Print elapsed time with an optional label
+        // Print elapsed time with optional label
         META_INLINE void print(std::string_view label = {}) const noexcept
         {
             if (!label.empty())
@@ -55,8 +55,7 @@ namespace meta
     private:
         Clock::time_point m_start;
 
-        // Convert to seconds at compile-time for selected duration type
-        META_FORCE_INLINE constexpr double to_seconds(std::chrono::high_resolution_clock::duration d) const noexcept
+        META_FORCE_INLINE constexpr double to_duration(std::chrono::high_resolution_clock::duration d) const noexcept
         {
             if constexpr (std::is_same_v<DurationTag, Seconds>)
                 return std::chrono::duration<double>(d).count();
@@ -67,22 +66,27 @@ namespace meta
             else if constexpr (std::is_same_v<DurationTag, Nanoseconds>)
                 return std::chrono::duration<double, std::nano>(d).count();
             else
-                return std::chrono::duration<double, std::milli>(d).count(); // default
+                return std::chrono::duration<double, std::milli>(d).count();
         }
 
-        // Duration name for printing
         META_INLINE constexpr const char* duration_name() const noexcept
         {
             if constexpr (std::is_same_v<DurationTag, Seconds>)
                 return "s";
-            else if constexpr (std::is_same_v<DurationTag, Milliseconds>)
+            if constexpr (std::is_same_v<DurationTag, Milliseconds>)
                 return "ms";
-            else if constexpr (std::is_same_v<DurationTag, Microseconds>)
+            if constexpr (std::is_same_v<DurationTag, Microseconds>)
                 return "us";
-            else if constexpr (std::is_same_v<DurationTag, Nanoseconds>)
+            if constexpr (std::is_same_v<DurationTag, Nanoseconds>)
                 return "ns";
-            else
-                return "ms";
+
+            return "ms";
         }
     };
+
+    // Convenience typedefs
+    using TimerS = Timer<Seconds>;
+    using TimerMs = Timer<Milliseconds>;
+    using TimerUs = Timer<Microseconds>;
+    using TimerNs = Timer<Nanoseconds>;
 } // namespace meta

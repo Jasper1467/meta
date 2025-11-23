@@ -8,7 +8,8 @@ namespace meta::gui
     class Layout
     {
     public:
-        Layout(int spacing = 0, int padding = 0) : m_spacing(spacing), m_padding(padding)
+        Layout(int spacing = 0, int padding = 0)
+            : m_spacing(spacing), m_padding(padding), m_scaleX(1.0f), m_scaleY(1.0f)
         {
         }
 
@@ -43,7 +44,19 @@ namespace meta::gui
             m_padding = p;
         }
 
-        virtual void updateLayout(int x, int y, int w, int h) = 0;
+        // Scaling
+        void setScale(float sx, float sy)
+        {
+            m_scaleX = sx;
+            m_scaleY = sy;
+
+            for (auto* w : m_widgets)
+                w->setScale(sx, sy);
+            for (auto& l : m_childLayouts)
+                l->setScale(sx, sy);
+        }
+
+        virtual void updateLayout(int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f) = 0;
 
         virtual int getWidth() const
         {
@@ -52,7 +65,7 @@ namespace meta::gui
                 width = std::max(width, w->getWidth());
             for (auto& l : m_childLayouts)
                 width = std::max(width, l->getWidth());
-            return width + 2 * m_padding;
+            return static_cast<int>((width + 2 * m_padding) * m_scaleX);
         }
 
         virtual int getHeight() const
@@ -64,7 +77,7 @@ namespace meta::gui
                 height += l->getHeight();
             if (!m_widgets.empty() || !m_childLayouts.empty())
                 height += m_spacing * (m_widgets.size() + m_childLayouts.size() - 1);
-            return height + 2 * m_padding;
+            return static_cast<int>((height + 2 * m_padding) * m_scaleY);
         }
 
     protected:
@@ -72,5 +85,6 @@ namespace meta::gui
         std::vector<std::shared_ptr<Layout>> m_childLayouts;
         int m_spacing;
         int m_padding;
+        float m_scaleX, m_scaleY;
     };
 } // namespace meta::gui

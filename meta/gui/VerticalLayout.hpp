@@ -11,25 +11,26 @@ namespace meta::gui
         {
         }
 
-        void updateLayout(int x, int y, int w, int h) override
+        void updateLayout(int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f) override
         {
-            int currentY = y + m_padding;
+            int currentY = y + static_cast<int>(m_padding * m_scaleY);
+            int availableWidth = static_cast<int>(w - 2 * m_padding * m_scaleX);
 
-            for (auto* wgt : m_widgets)
+            for (auto* widget : m_widgets)
             {
-                int widgetWidth = wgt->getWidth();
-                int widgetHeight = wgt->getHeight();
-                wgt->setPosition(x + m_padding, currentY);
-                wgt->setSize(widgetWidth, widgetHeight);
-                currentY += widgetHeight + m_spacing;
+                int widgetWidth = static_cast<int>(widget->getWidth() * m_scaleX);
+                int widgetHeight = static_cast<int>(widget->getHeight() * m_scaleY);
+                widget->setPosition(x + static_cast<int>(m_padding * m_scaleX), currentY);
+                widget->setSize(widgetWidth, widgetHeight);
+                currentY += widgetHeight + static_cast<int>(m_spacing * m_scaleY);
             }
 
-            for (auto& child : m_childLayouts)
+            for (auto& layout : m_childLayouts)
             {
-                int childWidth = child->getWidth();
-                int childHeight = child->getHeight();
-                child->updateLayout(x + m_padding, currentY, childWidth, childHeight);
-                currentY += childHeight + m_spacing;
+                int layoutHeight = layout->getHeight();
+                layout->updateLayout(x + static_cast<int>(m_padding * m_scaleX), currentY, availableWidth,
+                                     layoutHeight);
+                currentY += layoutHeight + static_cast<int>(m_spacing * m_scaleY);
             }
         }
 

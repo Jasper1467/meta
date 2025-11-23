@@ -1,4 +1,5 @@
 #pragma once
+
 #include <SDL.h>
 #include <memory>
 #include <meta/base/core/String.hpp>
@@ -11,7 +12,8 @@ namespace meta::gui
     class Widget
     {
     public:
-        Widget(int x = 0, int y = 0, int w = 100, int h = 30) : m_x(x), m_y(y), m_width(w), m_height(h)
+        Widget(int x = 0, int y = 0, int w = 100, int h = 30)
+            : m_x(x), m_y(y), m_width(w), m_height(h), m_scaleX(1.0f), m_scaleY(1.0f)
         {
         }
 
@@ -40,16 +42,6 @@ namespace meta::gui
             return m_height;
         }
 
-        int getX() const
-        {
-            return m_x;
-        }
-
-        int getY() const
-        {
-            return m_y;
-        }
-
         void setPosition(int x, int y)
         {
             m_x = x;
@@ -61,8 +53,31 @@ namespace meta::gui
             m_height = h;
         }
 
-        int m_x, m_y;
-        bool m_visible = true;
+        void setScale(float sx, float sy)
+        {
+            m_scaleX = sx;
+            m_scaleY = sy;
+        }
+
+        int getX() const
+        {
+            return m_x;
+        }
+
+        int getY() const
+        {
+            return m_y;
+        }
+
+        bool isVisible() const
+        {
+            return m_visible;
+        }
+
+        void setVisible(bool v)
+        {
+            m_visible = v;
+        }
 
     protected:
         void drawOutline(SDL_Renderer* renderer, const Theme& theme)
@@ -73,7 +88,7 @@ namespace meta::gui
             SDL_SetRenderDrawColor(renderer, theme.widgetOutlineColor.r, theme.widgetOutlineColor.g,
                                    theme.widgetOutlineColor.b, theme.widgetOutlineColor.a);
 
-            SDL_Rect rect{ m_x, m_y, m_width, m_height };
+            SDL_Rect rect{ getX(), getY(), getWidth(), getHeight() };
 
             for (int i = 0; i < theme.widgetOutlineSize; ++i)
             {
@@ -85,7 +100,11 @@ namespace meta::gui
             }
         }
 
+        int m_x, m_y;
         int m_width, m_height;
+        float m_scaleX, m_scaleY;
+        bool m_visible = true;
+
         std::shared_ptr<Theme> m_theme;
     };
 } // namespace meta::gui

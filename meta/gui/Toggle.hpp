@@ -1,6 +1,11 @@
 #pragma once
+
 #include <SDL.h>
+#include <SDL_ttf.h>
+#include <functional>
+#include <meta/base/core/String.hpp>
 #include <meta/gui/Theme.hpp>
+#include <meta/gui/Transition.hpp>
 #include <meta/gui/Widget.hpp>
 
 namespace meta::gui
@@ -8,7 +13,10 @@ namespace meta::gui
     class Toggle : public Widget
     {
     public:
-        Toggle(bool initial = false) : Widget(0, 0, 40, 24), m_state(initial)
+        Toggle(const meta::String<>& label = "", bool initialState = false)
+            : Widget(0, 0, 60, 28), // Desktop-friendly defaults: width=60, height=28
+              m_label(label), m_state(initialState),
+              m_knobTransition(initialState ? 1.0f : 0.0f, initialState ? 1.0f : 0.0f, 0.15f)
         {
         }
 
@@ -17,46 +25,19 @@ namespace meta::gui
             m_theme = theme;
         }
 
+        void setState(bool state)
+        {
+            if (state != m_state)
+            {
+                m_state = state;
+                m_knobTransition.setRange(m_knobTransition.update(), m_state ? 1.0f : 0.0f);
+                m_knobTransition.reset();
+            }
+        }
+
         bool getState() const
         {
             return m_state;
-        }
-        void setState(bool s)
-        {
-            m_state = s;
-        }
-
-        void toggle()
-        {
-            m_state = !m_state;
-        }
-
-        void handleEvent(const SDL_Event& e) override
-        {
-            if (!m_visible)
-                return;
-
-            int mx = 0, my = 0;
-
-            if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
-            {
-                mx = e.motion.x;
-                my = e.motion.y;
-
-                m_hovered = mx >= m_x && mx <= (m_x + m_width) && my >= m_y && my <= (m_y + m_height);
-            }
-
-            if (m_hovered && e.type == SDL_MOUSEBUTTONDOWN)
-                m_pressed = true;
-
-            if (m_pressed && m_hovered && e.type == SDL_MOUSEBUTTONUP)
-            {
-                toggle();
-                m_pressed = false;
-            }
-
-            if (e.type == SDL_MOUSEBUTTONUP && !m_hovered)
-                m_pressed = false;
         }
 
         void render(SDL_Renderer* renderer) override
@@ -65,161 +46,102 @@ namespace meta::gui
                 return;
 
             const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
+            float t = m_knobTransition.update();
 
-            // Track dimensions
-            const int trackH = theme.toggleTrackHeight;
-            const int trackR = trackH / 2;
-            const int trackW = m_width;
+            int width = m_width;
+            int height = m_height;
 
-            SDL_Rect trackRect{ m_x, m_y + (m_height - trackH) / 2, trackW, trackH };
+            // Draw pill-shaped track
+            SDL_Rect trackRect{ m_x, m_y, width, height };
+            SDL_Color trackColor = {
+                static_cast<Uint8>(theme.toggleOffColor.r + (theme.toggleOnColor.r - theme.toggleOffColor.r) * t),
+                static_cast<Uint8>(theme.toggleOffColor.g + (theme.toggleOnColor.g - theme.toggleOffColor.g) * t),
+                static_cast<Uint8>(theme.toggleOffColor.b + (theme.toggleOnColor.b - theme.toggleOffColor.b) * t), 255
+            };
+            filledRoundedRect(renderer, trackRect, height / 2, trackColor);
 
-            // Colors
-            SDL_Color trackColor = m_state ? theme.toggleOnColor : theme.toggleOffColor;
-            SDL_Color knobColor = theme.toggleKnobColor;
-            SDL_Color outlineColor = theme.toggleOutlineColor;
+            // Draw knob
+            int knobSize = height - 4; // internal padding
+            int knobX = static_cast<int>(m_x + 2 + t * (width - knobSize - 4));
+            SDL_Rect knobRect{ knobX, m_y + 2, knobSize, knobSize };
+            filledCircle(renderer, knobRect.x + knobSize / 2, knobRect.y + knobSize / 2, knobSize / 2,
+                         theme.toggleKnobColor);
 
-            // Draw track (rounded)
-            drawRoundedRect(renderer, trackRect, trackR, trackColor);
-
-            // Draw outline if enabled
-            if (theme.widgetOutlineEnable && theme.toggleOutlineSize > 0)
-                drawRoundedOutline(renderer, trackRect, trackR, outlineColor, theme.toggleOutlineSize);
-
-            // Knob position
-            const int margin = theme.toggleKnobMargin;
-            const int knobDiameter = trackH - margin * 2;
-            const int knobRadius = knobDiameter / 2;
-
-            int knobX = m_state ? (trackRect.x + trackRect.w - knobDiameter - margin) : (trackRect.x + margin);
-
-            int knobY = trackRect.y + margin;
-
-            SDL_Rect knobRect{ knobX, knobY, knobDiameter, knobDiameter };
-
-            drawCircle(renderer, knobRect, knobRadius, knobColor);
-
-            // Optional knob outline
-            if (theme.widgetOutlineEnable && theme.toggleOutlineSize > 0)
-                drawCircleOutline(renderer, knobRect, knobRadius, outlineColor, theme.toggleOutlineSize);
+            // Draw label (if any)
+            if (!m_label.empty() && m_font)
+            {
+                SDL_Surface* surface = TTF_RenderText_Blended(m_font, m_label.c_str(), theme.labelTextColor);
+                if (surface)
+                {
+                    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+                    SDL_Rect dst{ m_x + width + theme.spacing, m_y + (height - surface->h) / 2, surface->w,
+                                  surface->h };
+                    SDL_RenderCopy(renderer, texture, nullptr, &dst);
+                    SDL_DestroyTexture(texture);
+                    SDL_FreeSurface(surface);
+                }
+            }
         }
 
-        int getHeight() const override
+        void handleEvent(const SDL_Event& e) override
         {
-            const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
-            return std::max(m_height, theme.toggleTrackHeight);
+            if (!m_visible)
+                return;
+
+            if (e.type == SDL_MOUSEBUTTONDOWN)
+            {
+                int mx = e.button.x;
+                int my = e.button.y;
+                if (mx >= m_x && mx <= m_x + m_width && my >= m_y && my <= m_y + m_height)
+                {
+                    setState(!m_state);
+                    if (m_onToggle)
+                        m_onToggle(m_state);
+                }
+            }
+        }
+
+        void setOnToggle(std::function<void(bool)> callback)
+        {
+            m_onToggle = callback;
         }
 
     private:
-        bool m_state = false;
-        bool m_pressed = false;
-        bool m_hovered = false;
-
+        meta::String<> m_label;
+        bool m_state;
+        Transition m_knobTransition;
         std::shared_ptr<Theme> m_theme;
+        std::function<void(bool)> m_onToggle;
+        TTF_Font* m_font = nullptr;
 
-        // --- Drawing helpers ---
-
-        static void setColor(SDL_Renderer* r, SDL_Color c)
+        void filledCircle(SDL_Renderer* renderer, int cx, int cy, int radius, SDL_Color color)
         {
-            SDL_SetRenderDrawColor(r, c.r, c.g, c.b, c.a);
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+            for (int w = 0; w < radius * 2; ++w)
+                for (int h = 0; h < radius * 2; ++h)
+                    if ((radius - w) * (radius - w) + (radius - h) * (radius - h) <= radius * radius)
+                        SDL_RenderDrawPoint(renderer, cx + (radius - w), cy + (radius - h));
         }
 
-        static void drawRoundedRect(SDL_Renderer* r, const SDL_Rect& rect, int radius, SDL_Color color)
+        void filledRoundedRect(SDL_Renderer* renderer, const SDL_Rect& rect, int radius, SDL_Color color)
         {
-            setColor(r, color);
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
-            // Middle rectangle
-            SDL_Rect mid{ rect.x + radius, rect.y, rect.w - 2 * radius, rect.h };
-            SDL_RenderFillRect(r, &mid);
+            // Center rectangle
+            SDL_Rect center{ rect.x + radius, rect.y, rect.w - 2 * radius, rect.h };
+            SDL_RenderFillRect(renderer, &center);
 
-            // Left
+            // Side rectangles
             SDL_Rect left{ rect.x, rect.y + radius, radius, rect.h - 2 * radius };
-            SDL_RenderFillRect(r, &left);
-
-            // Right
             SDL_Rect right{ rect.x + rect.w - radius, rect.y + radius, radius, rect.h - 2 * radius };
-            SDL_RenderFillRect(r, &right);
+            SDL_RenderFillRect(renderer, &left);
+            SDL_RenderFillRect(renderer, &right);
 
-            // Top-left circle
-            drawFilledCircle(r, rect.x + radius, rect.y + radius, radius, color);
-
-            // Top-right circle
-            drawFilledCircle(r, rect.x + rect.w - radius, rect.y + radius, radius, color);
-
-            // Bottom-left circle
-            drawFilledCircle(r, rect.x + radius, rect.y + rect.h - radius, radius, color);
-
-            // Bottom-right circle
-            drawFilledCircle(r, rect.x + rect.w - radius, rect.y + rect.h - radius, radius, color);
-        }
-
-        static void drawRoundedOutline(SDL_Renderer* r, const SDL_Rect& rect, int radius, SDL_Color color, int size)
-        {
-            setColor(r, color);
-
-            SDL_Rect outline = rect;
-
-            for (int i = 0; i < size; i++)
-            {
-                SDL_RenderDrawRect(r, &outline);
-                outline.x++;
-                outline.y++;
-                outline.w -= 2;
-                outline.h -= 2;
-            }
-        }
-
-        static void drawFilledCircle(SDL_Renderer* r, int cx, int cy, int radius, SDL_Color color)
-        {
-            setColor(r, color);
-            for (int dy = -radius; dy <= radius; dy++)
-                for (int dx = -radius; dx <= radius; dx++)
-                    if (dx * dx + dy * dy <= radius * radius)
-                        SDL_RenderDrawPoint(r, cx + dx, cy + dy);
-        }
-
-        static void drawCircle(SDL_Renderer* r, const SDL_Rect& rect, int radius, SDL_Color color)
-        {
-            drawFilledCircle(r, rect.x + radius, rect.y + radius, radius, color);
-        }
-
-        static void drawCircleOutline(SDL_Renderer* r, const SDL_Rect& rect, int radius, SDL_Color color, int size)
-        {
-            for (int i = 0; i < size; i++)
-            {
-                drawCircleOutlineSingle(r, rect.x + radius, rect.y + radius, radius - i, color);
-            }
-        }
-
-        static void drawCircleOutlineSingle(SDL_Renderer* r, int cx, int cy, int radius, SDL_Color color)
-        {
-            setColor(r, color);
-
-            int x = radius;
-            int y = 0;
-            int err = 0;
-
-            while (x >= y)
-            {
-                SDL_RenderDrawPoint(r, cx + x, cy + y);
-                SDL_RenderDrawPoint(r, cx + y, cy + x);
-                SDL_RenderDrawPoint(r, cx - y, cy + x);
-                SDL_RenderDrawPoint(r, cx - x, cy + y);
-                SDL_RenderDrawPoint(r, cx - x, cy - y);
-                SDL_RenderDrawPoint(r, cx - y, cy - x);
-                SDL_RenderDrawPoint(r, cx + y, cy - x);
-                SDL_RenderDrawPoint(r, cx + x, cy - y);
-
-                y++;
-                if (err <= 0)
-                {
-                    err += 2 * y + 1;
-                }
-                if (err > 0)
-                {
-                    x--;
-                    err -= 2 * x + 1;
-                }
-            }
+            // Corners
+            filledCircle(renderer, rect.x + radius, rect.y + radius, radius, color);
+            filledCircle(renderer, rect.x + rect.w - radius, rect.y + radius, radius, color);
+            filledCircle(renderer, rect.x + radius, rect.y + rect.h - radius, radius, color);
+            filledCircle(renderer, rect.x + rect.w - radius, rect.y + rect.h - radius, radius, color);
         }
     };
 } // namespace meta::gui

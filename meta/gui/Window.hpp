@@ -1,4 +1,5 @@
 #pragma once
+
 #include <SDL.h>
 #include <memory>
 #include <meta/gui/Button.hpp>
@@ -12,14 +13,16 @@ namespace meta::gui
     class Window
     {
     public:
-        Window(const meta::String<>& title, int w, int h) : m_width(w), m_height(h), m_title(title)
+        Window(const meta::String<>& title, int w, int h)
+            : m_width(w), m_height(h), m_initialWidth(w), m_initialHeight(h), m_title(title)
         {
             SDL_Init(SDL_INIT_VIDEO);
-            m_window =
-                SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_SHOWN);
+
+            m_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
+                                        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+
             m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-            // Use default theme
             m_theme = std::make_shared<Theme>(DEFAULT_THEME);
         }
 
@@ -68,7 +71,6 @@ namespace meta::gui
         void setTheme(const std::shared_ptr<Theme>& theme)
         {
             m_theme = theme;
-            // Apply theme to all widgets
             for (auto* w : m_widgets)
                 w->setTheme(theme);
             if (m_layout)
@@ -77,11 +79,15 @@ namespace meta::gui
 
         void renderWidgets()
         {
-            if (m_layout)
-            {
-                m_layout->updateLayout(0, 0, m_width, m_height);
-                renderLayoutRecursive(m_layout);
-            }
+            if (!m_layout)
+                return;
+
+            // Compute scale factors
+            float scaleX = static_cast<float>(m_width) / m_initialWidth;
+            float scaleY = static_cast<float>(m_height) / m_initialHeight;
+
+            m_layout->updateLayout(0, 0, m_width, m_height, scaleX, scaleY);
+            renderLayoutRecursive(m_layout, scaleX, scaleY);
         }
 
         void pollEvents(bool& running)
@@ -91,6 +97,12 @@ namespace meta::gui
             {
                 if (e.type == SDL_QUIT)
                     running = false;
+
+                if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                {
+                    m_width = e.window.data1;
+                    m_height = e.window.data2;
+                }
 
                 if (m_layout)
                     handleLayoutEventsRecursive(m_layout, e);
@@ -102,31 +114,29 @@ namespace meta::gui
             bool running = true;
             while (running)
             {
-                // Clear with theme background color
+                SDL_GetWindowSize(m_window, &m_width, &m_height);
+
                 SDL_SetRenderDrawColor(m_renderer, m_theme->backgroundColor.r, m_theme->backgroundColor.g,
                                        m_theme->backgroundColor.b, m_theme->backgroundColor.a);
                 SDL_RenderClear(m_renderer);
 
-                // Handle events
                 pollEvents(running);
-
-                // Custom user loop
                 loop(running);
-
-                // Render widgets
                 renderWidgets();
-
                 SDL_RenderPresent(m_renderer);
             }
         }
 
     private:
-        void renderLayoutRecursive(const std::shared_ptr<Layout>& layout)
+        void renderLayoutRecursive(const std::shared_ptr<Layout>& layout, float scaleX, float scaleY)
         {
             for (auto* w : layout->widgets())
+            {
+                w->setScale(scaleX, scaleY);
                 w->render(m_renderer);
+            }
             for (auto& l : layout->childLayouts())
-                renderLayoutRecursive(l);
+                renderLayoutRecursive(l, scaleX, scaleY);
         }
 
         void handleLayoutEventsRecursive(const std::shared_ptr<Layout>& layout, const SDL_Event& e)
@@ -149,6 +159,7 @@ namespace meta::gui
         SDL_Window* m_window = nullptr;
         SDL_Renderer* m_renderer = nullptr;
         int m_width, m_height;
+        int m_initialWidth, m_initialHeight;
         meta::String<> m_title;
 
         std::vector<Widget*> m_widgets;
