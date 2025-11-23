@@ -4,6 +4,7 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <meta/core/Platform.hpp>
@@ -17,7 +18,6 @@ namespace meta
     public:
         static constexpr size_t npos = SIZE_MAX;
 
-        // --- Constructors ---
         META_INLINE String() noexcept : m_size(0)
         {
         }
@@ -49,7 +49,6 @@ namespace meta
         {
         }
 
-        // --- Copy / Move ---
         META_INLINE String(const String& other) : m_size(other.m_size)
         {
             if (other.m_runtime)
@@ -90,7 +89,6 @@ namespace meta
             return *this;
         }
 
-        // --- Comparison ---
         bool operator==(const String& rhs) const noexcept
         {
             if (m_size != rhs.m_size)
@@ -106,7 +104,6 @@ namespace meta
             return !(*this == rhs);
         }
 
-        // --- Concatenation ---
         template <size_t M> META_INLINE String<N>& operator+=(const String<M>& rhs)
         {
             if (m_runtime || m_size + rhs.size() > N)
@@ -168,7 +165,6 @@ namespace meta
             return String<>(toString() + std::string(rhs));
         }
 
-        // --- Access ---
         META_NODISCARD META_INLINE size_t size() const noexcept
         {
             return m_runtime ? m_runtime->size() : m_size;
@@ -198,7 +194,6 @@ namespace meta
             return m_runtime ? *m_runtime : std::string(m_buffer.data(), m_size);
         }
 
-        // --- Substring / Trim ---
         META_NODISCARD META_INLINE String substr(size_t pos, size_t len = npos) const
         {
             if (pos >= size())
@@ -221,7 +216,6 @@ namespace meta
             return *this;
         }
 
-        // --- Reverse find ---
         META_NODISCARD META_INLINE size_t rfind(char c, size_t pos = npos) const noexcept
         {
             if (size() == 0)
@@ -252,13 +246,11 @@ namespace meta
             return npos;
         }
 
-        // --- Stream output ---
         friend std::ostream& operator<<(std::ostream& os, const String& str)
         {
             return os << str.c_str();
         }
 
-        // --- Reserve for runtime optimization ---
         META_INLINE void reserve(size_t newCapacity)
         {
             if (newCapacity <= N)
@@ -268,9 +260,49 @@ namespace meta
             m_runtime->reserve(newCapacity);
         }
 
+        META_NODISCARD
+        META_INLINE char& front() noexcept
+        {
+            return m_runtime ? (*m_runtime)[0] : m_buffer[0];
+        }
+
+        META_NODISCARD
+        META_INLINE const char& front() const noexcept
+        {
+            return m_runtime ? (*m_runtime)[0] : m_buffer[0];
+        }
+
+        META_NODISCARD
+        META_INLINE char& back() noexcept
+        {
+            if (empty())
+                throw std::out_of_range("String is empty");
+            return m_runtime ? (*m_runtime)[m_runtime->size() - 1] : m_buffer[m_size - 1];
+        }
+
+        META_NODISCARD
+        META_INLINE const char& back() const noexcept
+        {
+            if (empty())
+                throw std::out_of_range("String is empty");
+            return m_runtime ? (*m_runtime)[m_runtime->size() - 1] : m_buffer[m_size - 1];
+        }
+
     private:
         size_t m_size = 0;
         std::array<char, N> m_buffer{};
         std::unique_ptr<std::string> m_runtime{};
     };
 } // namespace meta
+
+namespace std
+{
+    template <size_t N> struct hash<meta::String<N>>
+    {
+        size_t operator()(const meta::String<N>& s) const noexcept
+        {
+            // Use std::hash<std::string_view> on your string data
+            return std::hash<std::string_view>{}(s);
+        }
+    };
+} // namespace std

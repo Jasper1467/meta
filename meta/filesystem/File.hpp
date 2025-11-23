@@ -18,7 +18,6 @@ namespace meta
             Append
         };
 
-        // --- Constructors ---
         META_INLINE File() = default;
 
         explicit File(const Path& path, Mode mode)
@@ -26,13 +25,11 @@ namespace meta
             open(path, mode);
         }
 
-        // --- Destructor ---
         ~File()
         {
             close();
         }
 
-        // --- Open file ---
         META_INLINE void open(const Path& path, Mode mode)
         {
             std::ios_base::openmode openMode = std::ios_base::binary;
@@ -58,14 +55,12 @@ namespace meta
                 throw std::runtime_error("Failed to open file: " + path.toString());
         }
 
-        // --- Close file ---
         META_INLINE void close()
         {
             if (m_stream.is_open())
                 m_stream.close();
         }
 
-        // --- Check status ---
         META_NODISCARD META_INLINE bool isOpen() const
         {
             return m_stream.is_open();
@@ -76,7 +71,6 @@ namespace meta
             return m_stream.eof();
         }
 
-        // --- Read ---
         META_INLINE String<> readAll()
         {
             if (!m_stream.is_open())
@@ -87,7 +81,7 @@ namespace meta
             m_stream.seekg(0, std::ios::beg);
 
             String<> result;
-            result.reserve(size); // Optional, if String has reserve
+            result.reserve(size);
             char c;
             while (m_stream.get(c))
                 result += c;
@@ -95,7 +89,6 @@ namespace meta
             return result;
         }
 
-        // --- Write ---
         META_INLINE void write(const String<>& data)
         {
             if (!m_stream.is_open())
