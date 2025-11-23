@@ -33,17 +33,6 @@ local clangd_cmd = {
     "--completion-style=detailed"
 }
 
--- Apply clang-format automatically for C/C++ files
-vim.api.nvim_create_autocmd("BufWritePre", {
-    pattern = { "*.cpp", "*.hpp", "*.cxx", "*.h" },
-    callback = function()
-        vim.cmd("silent! !clang-format -i %")
-    end
-})
-
--- ==============================
--- Start clangd Client
--- ==============================
 vim.lsp.start_client({
     name = "clangd",
     cmd = clangd_cmd,
