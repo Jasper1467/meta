@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cmath>
 #include <iostream>
 #include <meta/base/core/Platform.hpp>
@@ -6,8 +7,8 @@
 
 namespace meta::Math
 {
-    // Simple constexpr sqrt approximation for pre-C++26
-    constexpr double constexpr_sqrt(double x, double eps = 1e-10)
+    // Simple constexpr sqrt for pre-C++26
+    META_INLINE constexpr double constexpr_sqrt(double x, double eps = 1e-10)
     {
         double guess = x / 2.0;
         double last_guess = 0.0;
@@ -19,27 +20,74 @@ namespace meta::Math
         return guess;
     }
 
-    template <typename T>
-    struct Vector2D
+    template <typename T> struct Vector2D
     {
         T x{};
         T y{};
 
-        constexpr Vector2D() noexcept = default;
-        constexpr Vector2D(T x_, T y_) noexcept : x(x_), y(y_) {}
+        META_INLINE constexpr Vector2D() noexcept = default;
+        META_INLINE constexpr Vector2D(T x_, T y_) noexcept : x(x_), y(y_)
+        {
+        }
 
-        constexpr Vector2D operator+(const Vector2D& rhs) const noexcept { return {x + rhs.x, y + rhs.y}; }
-        constexpr Vector2D operator-(const Vector2D& rhs) const noexcept { return {x - rhs.x, y - rhs.y}; }
-        constexpr Vector2D operator*(T scalar) const noexcept { return {x * scalar, y * scalar}; }
-        constexpr Vector2D operator/(T scalar) const noexcept { return {x / scalar, y / scalar}; }
+        // Static helpers
+        META_INLINE static constexpr Vector2D zero() noexcept
+        {
+            return { T(0), T(0) };
+        }
+        META_INLINE static constexpr Vector2D one() noexcept
+        {
+            return { T(1), T(1) };
+        }
 
-        constexpr Vector2D& operator+=(const Vector2D& rhs) noexcept { x += rhs.x; y += rhs.y; return *this; }
-        constexpr Vector2D& operator-=(const Vector2D& rhs) noexcept { x -= rhs.x; y -= rhs.y; return *this; }
-        constexpr Vector2D& operator*=(T scalar) noexcept { x *= scalar; y *= scalar; return *this; }
-        constexpr Vector2D& operator/=(T scalar) noexcept { x /= scalar; y /= scalar; return *this; }
+        // Arithmetic
+        META_INLINE constexpr Vector2D operator+(const Vector2D& rhs) const noexcept
+        {
+            return { x + rhs.x, y + rhs.y };
+        }
+        META_INLINE constexpr Vector2D operator-(const Vector2D& rhs) const noexcept
+        {
+            return { x - rhs.x, y - rhs.y };
+        }
+        META_INLINE constexpr Vector2D operator*(T scalar) const noexcept
+        {
+            return { x * scalar, y * scalar };
+        }
+        META_INLINE constexpr Vector2D operator/(T scalar) const noexcept
+        {
+            return { x / scalar, y / scalar };
+        }
 
-        META_NODISCARD constexpr T lengthSquared() const noexcept { return x * x + y * y; }
+        META_INLINE constexpr Vector2D& operator+=(const Vector2D& rhs) noexcept
+        {
+            x += rhs.x;
+            y += rhs.y;
+            return *this;
+        }
+        META_INLINE constexpr Vector2D& operator-=(const Vector2D& rhs) noexcept
+        {
+            x -= rhs.x;
+            y -= rhs.y;
+            return *this;
+        }
+        META_INLINE constexpr Vector2D& operator*=(T scalar) noexcept
+        {
+            x *= scalar;
+            y *= scalar;
+            return *this;
+        }
+        META_INLINE constexpr Vector2D& operator/=(T scalar) noexcept
+        {
+            x /= scalar;
+            y /= scalar;
+            return *this;
+        }
 
+        // Magnitude
+        META_NODISCARD constexpr T lengthSquared() const noexcept
+        {
+            return x * x + y * y;
+        }
         META_NODISCARD T length() const noexcept
         {
 #if __cpp_lib_constexpr_math >= 201907L
@@ -49,12 +97,32 @@ namespace meta::Math
 #endif
         }
 
-        META_NODISCARD constexpr T dot(const Vector2D& rhs) const noexcept { return x * rhs.x + y * rhs.y; }
+        // Distance helpers
+        META_NODISCARD T distanceSquared(const Vector2D& rhs) const noexcept
+        {
+            return (rhs - *this).lengthSquared();
+        }
+        META_NODISCARD T distance(const Vector2D& rhs) const noexcept
+        {
+            return std::sqrt(distanceSquared(rhs));
+        }
 
-        Vector2D normalized() const noexcept
+        META_NODISCARD constexpr T dot(const Vector2D& rhs) const noexcept
+        {
+            return x * rhs.x + y * rhs.y;
+        }
+
+        // Normalize
+        META_NODISCARD Vector2D normalized() const noexcept
         {
             T len = length();
             return len != T(0) ? (*this / len) : *this;
+        }
+
+        // Clamp
+        META_INLINE Vector2D clamp(T minVal, T maxVal) const noexcept
+        {
+            return { std::fmax(minVal, std::fmin(maxVal, x)), std::fmax(minVal, std::fmin(maxVal, y)) };
         }
 
         friend std::ostream& operator<<(std::ostream& os, const Vector2D& v)
@@ -63,27 +131,76 @@ namespace meta::Math
         }
     };
 
-    template <typename T>
-    struct Vector3D
+    template <typename T> struct Vector3D
     {
         T x{};
         T y{};
         T z{};
 
-        constexpr Vector3D() noexcept = default;
-        constexpr Vector3D(T x_, T y_, T z_) noexcept : x(x_), y(y_), z(z_) {}
+        META_INLINE constexpr Vector3D() noexcept = default;
+        META_INLINE constexpr Vector3D(T x_, T y_, T z_) noexcept : x(x_), y(y_), z(z_)
+        {
+        }
 
-        constexpr Vector3D operator+(const Vector3D& rhs) const noexcept { return {x + rhs.x, y + rhs.y, z + rhs.z}; }
-        constexpr Vector3D operator-(const Vector3D& rhs) const noexcept { return {x - rhs.x, y - rhs.y, z - rhs.z}; }
-        constexpr Vector3D operator*(T scalar) const noexcept { return {x * scalar, y * scalar, z * scalar}; }
-        constexpr Vector3D operator/(T scalar) const noexcept { return {x / scalar, y / scalar, z / scalar}; }
+        META_INLINE static constexpr Vector3D zero() noexcept
+        {
+            return { T(0), T(0), T(0) };
+        }
+        META_INLINE static constexpr Vector3D one() noexcept
+        {
+            return { T(1), T(1), T(1) };
+        }
 
-        constexpr Vector3D& operator+=(const Vector3D& rhs) noexcept { x += rhs.x; y += rhs.y; z += rhs.z; return *this; }
-        constexpr Vector3D& operator-=(const Vector3D& rhs) noexcept { x -= rhs.x; y -= rhs.y; z -= rhs.z; return *this; }
-        constexpr Vector3D& operator*=(T scalar) noexcept { x *= scalar; y *= scalar; z *= scalar; return *this; }
-        constexpr Vector3D& operator/=(T scalar) noexcept { x /= scalar; y /= scalar; z /= scalar; return *this; }
+        META_INLINE constexpr Vector3D operator+(const Vector3D& rhs) const noexcept
+        {
+            return { x + rhs.x, y + rhs.y, z + rhs.z };
+        }
+        META_INLINE constexpr Vector3D operator-(const Vector3D& rhs) const noexcept
+        {
+            return { x - rhs.x, y - rhs.y, z - rhs.z };
+        }
+        META_INLINE constexpr Vector3D operator*(T scalar) const noexcept
+        {
+            return { x * scalar, y * scalar, z * scalar };
+        }
+        META_INLINE constexpr Vector3D operator/(T scalar) const noexcept
+        {
+            return { x / scalar, y / scalar, z / scalar };
+        }
 
-        META_NODISCARD constexpr T lengthSquared() const noexcept { return x*x + y*y + z*z; }
+        META_INLINE constexpr Vector3D& operator+=(const Vector3D& rhs) noexcept
+        {
+            x += rhs.x;
+            y += rhs.y;
+            z += rhs.z;
+            return *this;
+        }
+        META_INLINE constexpr Vector3D& operator-=(const Vector3D& rhs) noexcept
+        {
+            x -= rhs.x;
+            y -= rhs.y;
+            z -= rhs.z;
+            return *this;
+        }
+        META_INLINE constexpr Vector3D& operator*=(T scalar) noexcept
+        {
+            x *= scalar;
+            y *= scalar;
+            z *= scalar;
+            return *this;
+        }
+        META_INLINE constexpr Vector3D& operator/=(T scalar) noexcept
+        {
+            x /= scalar;
+            y /= scalar;
+            z /= scalar;
+            return *this;
+        }
+
+        META_NODISCARD constexpr T lengthSquared() const noexcept
+        {
+            return x * x + y * y + z * z;
+        }
         META_NODISCARD T length() const noexcept
         {
 #if __cpp_lib_constexpr_math >= 201907L
@@ -93,12 +210,34 @@ namespace meta::Math
 #endif
         }
 
-        META_NODISCARD constexpr T dot(const Vector3D& rhs) const noexcept { return x*rhs.x + y*rhs.y + z*rhs.z; }
+        META_NODISCARD constexpr T dot(const Vector3D& rhs) const noexcept
+        {
+            return x * rhs.x + y * rhs.y + z * rhs.z;
+        }
+        META_NODISCARD Vector3D cross(const Vector3D& rhs) const noexcept
+        {
+            return { y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x };
+        }
 
-        Vector3D normalized() const noexcept
+        META_NODISCARD T distanceSquared(const Vector3D& rhs) const noexcept
+        {
+            return (*this - rhs).lengthSquared();
+        }
+        META_NODISCARD T distance(const Vector3D& rhs) const noexcept
+        {
+            return std::sqrt(distanceSquared(rhs));
+        }
+
+        META_NODISCARD Vector3D normalized() const noexcept
         {
             T len = length();
             return len != T(0) ? (*this / len) : *this;
+        }
+
+        META_INLINE Vector3D clamp(T minVal, T maxVal) const noexcept
+        {
+            return { std::fmax(minVal, std::fmin(maxVal, x)), std::fmax(minVal, std::fmin(maxVal, y)),
+                     std::fmax(minVal, std::fmin(maxVal, z)) };
         }
 
         friend std::ostream& operator<<(std::ostream& os, const Vector3D& v)
@@ -107,28 +246,81 @@ namespace meta::Math
         }
     };
 
-    template <typename T>
-    struct Vector4D
+    template <typename T> struct Vector4D
     {
         T x{};
         T y{};
         T z{};
         T w{};
 
-        constexpr Vector4D() noexcept = default;
-        constexpr Vector4D(T x_, T y_, T z_, T w_) noexcept : x(x_), y(y_), z(z_), w(w_) {}
+        META_INLINE constexpr Vector4D() noexcept = default;
+        META_INLINE constexpr Vector4D(T x_, T y_, T z_, T w_) noexcept : x(x_), y(y_), z(z_), w(w_)
+        {
+        }
 
-        constexpr Vector4D operator+(const Vector4D& rhs) const noexcept { return {x+rhs.x, y+rhs.y, z+rhs.z, w+rhs.w}; }
-        constexpr Vector4D operator-(const Vector4D& rhs) const noexcept { return {x-rhs.x, y-rhs.y, z-rhs.z, w-rhs.w}; }
-        constexpr Vector4D operator*(T scalar) const noexcept { return {x*scalar, y*scalar, z*scalar, w*scalar}; }
-        constexpr Vector4D operator/(T scalar) const noexcept { return {x/scalar, y/scalar, z/scalar, w/scalar}; }
+        META_INLINE static constexpr Vector4D zero() noexcept
+        {
+            return { T(0), T(0), T(0), T(0) };
+        }
+        META_INLINE static constexpr Vector4D one() noexcept
+        {
+            return { T(1), T(1), T(1), T(1) };
+        }
 
-        constexpr Vector4D& operator+=(const Vector4D& rhs) noexcept { x+=rhs.x; y+=rhs.y; z+=rhs.z; w+=rhs.w; return *this; }
-        constexpr Vector4D& operator-=(const Vector4D& rhs) noexcept { x-=rhs.x; y-=rhs.y; z-=rhs.z; w-=rhs.w; return *this; }
-        constexpr Vector4D& operator*=(T scalar) noexcept { x*=scalar; y*=scalar; z*=scalar; w*=scalar; return *this; }
-        constexpr Vector4D& operator/=(T scalar) noexcept { x/=scalar; y/=scalar; z/=scalar; w/=scalar; return *this; }
+        META_INLINE constexpr Vector4D operator+(const Vector4D& rhs) const noexcept
+        {
+            return { x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w };
+        }
+        META_INLINE constexpr Vector4D operator-(const Vector4D& rhs) const noexcept
+        {
+            return { x - rhs.x, y - rhs.y, z - rhs.z, w - wrhs.w };
+        }
+        META_INLINE constexpr Vector4D operator*(T scalar) const noexcept
+        {
+            return { x * scalar, y * scalar, z * scalar, w * scalar };
+        }
+        META_INLINE constexpr Vector4D operator/(T scalar) const noexcept
+        {
+            return { x / scalar, y / scalar, z / scalar, w / scalar };
+        }
 
-        META_NODISCARD constexpr T lengthSquared() const noexcept { return x*x + y*y + z*z + w*w; }
+        META_INLINE constexpr Vector4D& operator+=(const Vector4D& rhs) noexcept
+        {
+            x += rhs.x;
+            y += rhs.y;
+            z += rhs.z;
+            w += rhs.w;
+            return *this;
+        }
+        META_INLINE constexpr Vector4D& operator-=(const Vector4D& rhs) noexcept
+        {
+            x -= rhs.x;
+            y -= rhs.y;
+            z -= rhs.z;
+            w -= rhs.w;
+            return *this;
+        }
+        META_INLINE constexpr Vector4D& operator*=(T scalar) noexcept
+        {
+            x *= scalar;
+            y *= scalar;
+            z *= scalar;
+            w *= scalar;
+            return *this;
+        }
+        META_INLINE constexpr Vector4D& operator/=(T scalar) noexcept
+        {
+            x /= scalar;
+            y /= scalar;
+            z /= scalar;
+            w /= scalar;
+            return *this;
+        }
+
+        META_NODISCARD constexpr T lengthSquared() const noexcept
+        {
+            return x * x + y * y + z * z + w * w;
+        }
         META_NODISCARD T length() const noexcept
         {
 #if __cpp_lib_constexpr_math >= 201907L
@@ -138,12 +330,21 @@ namespace meta::Math
 #endif
         }
 
-        META_NODISCARD constexpr T dot(const Vector4D& rhs) const noexcept { return x*rhs.x + y*rhs.y + z*rhs.z + w*rhs.w; }
+        META_NODISCARD constexpr T dot(const Vector4D& rhs) const noexcept
+        {
+            return x * rhs.x + y * rhs.y + z * rhs.z + w * rhs.w;
+        }
 
-        Vector4D normalized() const noexcept
+        META_NODISCARD Vector4D normalized() const noexcept
         {
             T len = length();
             return len != T(0) ? (*this / len) : *this;
+        }
+
+        META_INLINE Vector4D clamp(T minVal, T maxVal) const noexcept
+        {
+            return { std::fmax(minVal, std::fmin(maxVal, x)), std::fmax(minVal, std::fmin(maxVal, y)),
+                     std::fmax(minVal, std::fmin(maxVal, z)), std::fmax(minVal, std::fmin(maxVal, w)) };
         }
 
         friend std::ostream& operator<<(std::ostream& os, const Vector4D& v)
