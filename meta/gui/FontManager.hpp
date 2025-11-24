@@ -1,7 +1,7 @@
 #pragma once
 #include <SDL_ttf.h>
 #include <meta/base/core/Console.hpp>
-#include <string>
+#include <meta/base/filesystem/Path.hpp>
 #include <unordered_map>
 
 namespace meta::gui
@@ -15,24 +15,24 @@ namespace meta::gui
             return fm;
         }
 
-        // Load font by path and size, cached to avoid reopening multiple times
-        TTF_Font* loadFont(const std::string& path, int size)
+        // Load font by Path and size, cached to avoid reopening multiple times
+        TTF_Font* loadFont(const Path& path, int size)
         {
-            auto key = path + "#" + std::to_string(size);
-            auto it = m_fonts.find(key);
-            if (it != m_fonts.end())
-                return it->second;
-
             if (path.empty())
             {
                 meta::errorln("FontManager: font path is empty, cannot load font.");
                 return nullptr;
             }
 
+            std::string key = path.toString() + "#" + std::to_string(size);
+            auto it = m_fonts.find(key);
+            if (it != m_fonts.end())
+                return it->second;
+
             TTF_Font* font = TTF_OpenFont(path.c_str(), size);
             if (!font)
             {
-                meta::errorln("FontManager: failed to load font: ", TTF_GetError());
+                meta::errorln("FontManager: failed to load font '", path, "': ", TTF_GetError());
                 return nullptr;
             }
 
@@ -40,15 +40,14 @@ namespace meta::gui
             return font;
         }
 
-        // Close all fonts on shutdown
+        // Close all fonts safely on shutdown
         ~FontManager()
         {
-            for (auto& pair : m_fonts)
+            for (auto& [key, font] : m_fonts)
             {
-                if (pair.second)
-                    TTF_CloseFont(pair.second);
+                if (font)
+                    TTF_CloseFont(font);
             }
-
             m_fonts.clear();
 
             if (TTF_WasInit())
@@ -59,7 +58,7 @@ namespace meta::gui
         FontManager()
         {
             if (TTF_WasInit() == 0 && TTF_Init() == -1)
-                meta::errorln("Failed to initialize SDL_ttf: ", TTF_GetError());
+                meta::errorln("FontManager: Failed to initialize SDL_ttf: ", TTF_GetError());
         }
 
         FontManager(const FontManager&) = delete;
