@@ -12,66 +12,68 @@
 
 int main()
 {
+    // Initialize logger
     meta::Logger logger;
     logger.setLevel(meta::LogLevel::Debug);
     logger.includeTimestamps(true);
-    logger.setFile("tab_demo.log");
+    logger.setFile("widget_demo.log");
 
-    meta::println("Starting Tab System Demo...");
+    meta::println("Starting Widget Demo...");
 
-    meta::gui::Window window("Tab System Demo", 800, 600);
+    // Create main window
+    meta::gui::Window window("Widget Demo", 800, 600);
 
     // Create TabContainer
     auto tabContainer = std::make_shared<meta::gui::TabContainer>(10, 10, 780, 580);
 
-    // ---------- Page 1 ----------
+    // ---------- Page 1: Controls ----------
     auto page1 = std::make_shared<meta::gui::VerticalLayout>(10, 10);
 
-    auto btn1 = std::make_shared<meta::gui::Button>("Button 1");
-    btn1->clicked.connect([]() { meta::println("Button 1 clicked on Page 1!"); });
+    // Button
+    auto button1 = std::make_shared<meta::gui::Button>("Click Me");
+    button1->clicked.connect([]() { meta::println("Button clicked!"); });
 
+    // Slider
     auto slider1 = std::make_shared<meta::gui::Slider>("Volume");
     slider1->setValue(50);
-    slider1->valueChanged.connect([](int v) { meta::println("Slider value:", v); });
+    slider1->valueChanged.connect([](int value) { meta::println("Slider value:", value); });
 
-    page1->addWidget(btn1.get());
+    page1->addWidget(button1.get());
     page1->addWidget(slider1.get());
 
     auto tab1 = std::make_shared<meta::gui::Tab>("Controls");
 
-    // ---------- Page 2 ----------
+    // ---------- Page 2: Inputs ----------
     auto page2 = std::make_shared<meta::gui::VerticalLayout>(10, 10);
 
-    auto textBox1 = std::make_shared<meta::gui::TextBox>("Enter text:");
-    textBox1->textChanged.connect([](const meta::String<>& t) { meta::println("Text changed:", t); });
+    // CheckBox
+    auto checkBox = std::make_shared<meta::gui::CheckBox>("Check me");
+    checkBox->toggled.connect([](bool checked) { meta::println("CheckBox toggled:", checked); });
 
-    auto checkBox1 = std::make_shared<meta::gui::CheckBox>("Check me");
-    checkBox1->toggled.connect([](bool checked) { meta::println("CheckBox toggled:", checked); });
+    // Toggle
+    auto toggle = std::make_shared<meta::gui::Toggle>("Toggle me");
+    toggle->toggled.connect([](bool state) { meta::println("Toggle state:", state); });
 
-    auto toggle1 = std::make_shared<meta::gui::Toggle>("Toggle me");
-    toggle1->toggled.connect([](bool state) { meta::println("Toggle state:", state); });
+    page2->addWidget(checkBox.get());
+    page2->addWidget(toggle.get());
 
-    page2->addWidget(textBox1.get());
-    page2->addWidget(checkBox1.get());
-    page2->addWidget(toggle1.get());
+    auto tab2 = std::make_shared<meta::gui::Tab>("Inputs");
 
-    auto tab2 = std::make_shared<meta::gui::Tab>("Settings");
-
-    // Add tabs to container
+    // Add tabs to TabContainer
     tabContainer->addTab(tab1, page1);
     tabContainer->addTab(tab2, page2);
 
-    // Connect tab change signal
-    tabContainer->tabChanged.connect([](int index) { meta::println("Active Tab Changed to index:", index); });
+    // Tab change signal
+    tabContainer->tabChanged.connect([](int index) { meta::println("Active tab changed to index:", index); });
 
-    // Set TabContainer as main layout
+    // Set layout
     window.setLayout(tabContainer);
 
-    // Main loop
+    // Run main loop
     window.run(
         [](bool& running)
         {
-            // Per-frame logic here if needed
+            // Optional per-frame logic
         });
 
     return 0;
