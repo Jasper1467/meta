@@ -3,7 +3,7 @@
 #include <SDL_ttf.h>
 #include <meta/base/core/String.hpp>
 #include <meta/gui/Theme.hpp>
-#include <meta/gui/Widget.hpp>
+#include <meta/gui/widgets/Widget.hpp>
 
 namespace meta::gui
 {

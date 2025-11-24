@@ -5,7 +5,7 @@
 #include <meta/base/core/Console.hpp>
 #include <meta/base/core/String.hpp>
 #include <meta/gui/Theme.hpp>
-#include <meta/gui/Widget.hpp>
+#include <meta/gui/widgets/Widget.hpp>
 #include <meta/gui/FontManager.hpp>
 
 namespace meta::gui

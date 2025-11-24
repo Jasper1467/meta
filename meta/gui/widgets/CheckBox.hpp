@@ -2,12 +2,11 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
-
-#include <meta/base/core/Console.hpp>
-#include <meta/gui/FontManager.hpp> // use the font manager singleton
-#include <meta/gui/Theme.hpp>
-#include <meta/gui/Widget.hpp>
 #include <memory>
+#include <meta/base/core/Console.hpp>
+#include <meta/gui/FontManager.hpp>
+#include <meta/gui/Theme.hpp>
+#include <meta/gui/widgets/Widget.hpp>
 
 namespace meta::gui
 {
@@ -16,22 +15,21 @@ namespace meta::gui
     public:
         CheckBox(const meta::String<>& label = "", bool checked = false,
                  const std::shared_ptr<Theme>& theme = std::make_shared<Theme>())
-            : m_label(label), m_checked(checked), m_theme(theme)
+            : Widget(theme->minWidth, theme->minHeight, 120, theme->minHeight), m_label(label), m_checked(checked),
+              m_theme(theme)
         {
             loadFont();
-            m_width = 120;
-            m_height = m_theme->minHeight;
         }
 
-        // Signal for check state changes
-        Signal<bool> onChange;
+        // Signal emitted when checkbox state changes
+        Signal<bool> toggled;
 
-        void setChecked(bool value)
+        void setChecked(bool checked)
         {
-            if (m_checked != value)
+            if (m_checked != checked)
             {
-                m_checked = value;
-                onChange.emit(m_checked); // emit signal on change
+                m_checked = checked;
+                toggled.emit(m_checked);
             }
         }
 
@@ -53,10 +51,7 @@ namespace meta::gui
 
             const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
 
-            int boxSize = m_height - theme.padding * 2;
-            if (boxSize < 14)
-                boxSize = 14;
-
+            int boxSize = std::max(14, m_height - 2 * theme.padding);
             int boxX = m_x + theme.padding;
             int boxY = m_y + (m_height - boxSize) / 2;
 
@@ -74,23 +69,21 @@ namespace meta::gui
                 SDL_RenderFillRect(renderer, &boxRect);
             }
 
-            // Draw outline using Widget helper
+            // Draw outline
             {
                 int oldX = m_x, oldY = m_y, oldW = m_width, oldH = m_height;
                 m_x = boxX;
                 m_y = boxY;
                 m_width = boxSize;
                 m_height = boxSize;
-
                 drawOutline(renderer, theme);
-
                 m_x = oldX;
                 m_y = oldY;
                 m_width = oldW;
                 m_height = oldH;
             }
 
-            // Draw checkmark (simple X)
+            // Draw checkmark
             if (m_checked)
             {
                 SDL_SetRenderDrawColor(renderer, theme.widgetTextColor.r, theme.widgetTextColor.g,
@@ -99,22 +92,19 @@ namespace meta::gui
                 SDL_RenderDrawLine(renderer, boxX + 3, boxY + boxSize - 4, boxX + boxSize - 4, boxY + 3);
             }
 
-            // Render label text
+            // Draw label
             if (m_font && !m_label.empty())
             {
-                SDL_Surface* surf = TTF_RenderText_Blended(m_font, m_label.c_str(), theme.labelTextColor);
-                if (surf)
+                SDL_Surface* surface = TTF_RenderText_Blended(m_font, m_label.c_str(), theme.labelTextColor);
+                if (surface)
                 {
-                    SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
-                    if (tex)
-                    {
-                        int textW, textH;
-                        SDL_QueryTexture(tex, nullptr, nullptr, &textW, &textH);
-                        SDL_Rect dst{ boxX + boxSize + theme.padding, m_y + (m_height - textH) / 2, textW, textH };
-                        SDL_RenderCopy(renderer, tex, nullptr, &dst);
-                        SDL_DestroyTexture(tex);
-                    }
-                    SDL_FreeSurface(surf);
+                    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+                    int textW = surface->w;
+                    int textH = surface->h;
+                    SDL_Rect dst{ boxX + boxSize + theme.padding, m_y + (m_height - textH) / 2, textW, textH };
+                    SDL_RenderCopy(renderer, texture, nullptr, &dst);
+                    SDL_DestroyTexture(texture);
+                    SDL_FreeSurface(surface);
                 }
             }
         }
@@ -124,13 +114,11 @@ namespace meta::gui
             if (!m_visible)
                 return;
 
-            int mx, my;
-
+            int mx = 0, my = 0;
             if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
             {
                 mx = e.motion.x;
                 my = e.motion.y;
-
                 m_hovered = mx >= m_x && mx <= m_x + m_width && my >= m_y && my <= m_y + m_height;
             }
 
@@ -140,12 +128,29 @@ namespace meta::gui
             if (m_hovered && e.type == SDL_MOUSEBUTTONUP)
             {
                 if (m_pressed)
-                    setChecked(!m_checked); // emits signal automatically
+                    setChecked(!m_checked); // emits signal
                 m_pressed = false;
             }
 
             if (e.type == SDL_MOUSEBUTTONUP && !m_hovered)
                 m_pressed = false;
+        }
+
+        int getWidth() const override
+        {
+            const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
+            int textWidth = 0;
+            if (m_font && !m_label.empty())
+                TTF_SizeText(m_font, m_label.c_str(), &textWidth, nullptr);
+            int boxSize = std::max(14, m_height - 2 * theme.padding);
+            return std::max(m_width, boxSize + theme.padding + textWidth + theme.padding);
+        }
+
+        int getHeight() const override
+        {
+            const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
+            int textHeight = m_font ? TTF_FontHeight(m_font) : 0;
+            return std::max(m_height, textHeight + 2 * theme.padding);
         }
 
     private:
@@ -164,11 +169,11 @@ namespace meta::gui
             {
                 m_font = FontManager::instance().loadFont(m_theme->fontPath.c_str(), m_theme->fontSize);
                 if (!m_font)
-                    meta::errorln("Failed to load font from FontManager!");
+                    meta::errorln("CheckBox: Failed to load font from FontManager!");
             }
             else
             {
-                meta::errorln("No font path specified in theme.");
+                meta::errorln("CheckBox: No font path specified in theme.");
             }
         }
     };

@@ -6,7 +6,7 @@
 #include <meta/gui/FontManager.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Transition.hpp>
-#include <meta/gui/Widget.hpp>
+#include <meta/gui/widgets/Widget.hpp>
 
 namespace meta::gui
 {

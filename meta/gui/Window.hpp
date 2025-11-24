@@ -3,10 +3,9 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <memory>
-#include <meta/gui/Button.hpp>
-#include <meta/gui/Layout.hpp>
+#include <meta/gui/layouts/Layout.hpp>
 #include <meta/gui/Theme.hpp>
-#include <meta/gui/Widget.hpp>
+#include <meta/gui/widgets/Widget.hpp>
 #include <vector>
 
 namespace meta::gui

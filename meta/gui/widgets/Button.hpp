@@ -5,7 +5,7 @@
 #include <meta/base/core/Console.hpp>
 #include <meta/gui/FontManager.hpp> // include the singleton font manager
 #include <meta/gui/Theme.hpp>
-#include <meta/gui/Widget.hpp>
+#include <meta/gui/widgets/Widget.hpp>
 #include <memory>
 
 namespace meta::gui

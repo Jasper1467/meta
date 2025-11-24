@@ -1,14 +1,14 @@
 #include <meta/base/app/Logger.hpp>
-#include <meta/gui/Button.hpp>
-#include <meta/gui/CheckBox.hpp>
-#include <meta/gui/Slider.hpp>
-#include <meta/gui/Tab.hpp>
 #include <meta/gui/TabContainer.hpp>
-#include <meta/gui/TextBox.hpp>
 #include <meta/gui/Theme.hpp>
-#include <meta/gui/Toggle.hpp>
-#include <meta/gui/VerticalLayout.hpp>
 #include <meta/gui/Window.hpp>
+#include <meta/gui/layouts/VerticalLayout.hpp>
+#include <meta/gui/widgets/Button.hpp>
+#include <meta/gui/widgets/CheckBox.hpp>
+#include <meta/gui/widgets/Slider.hpp>
+#include <meta/gui/widgets/Tab.hpp>
+#include <meta/gui/widgets/TextBox.hpp>
+#include <meta/gui/widgets/Toggle.hpp>
 
 int main()
 {
@@ -19,7 +19,7 @@ int main()
 
     meta::println("Starting Tab System Demo...");
 
-    meta::gui::Window window("Tab System Demo", 800, 600); 
+    meta::gui::Window window("Tab System Demo", 800, 600);
 
     // Create TabContainer
     auto tabContainer = std::make_shared<meta::gui::TabContainer>(10, 10, 780, 580);
@@ -46,7 +46,7 @@ int main()
     textBox1->textChanged.connect([](const meta::String<>& t) { meta::println("Text changed:", t); });
 
     auto checkBox1 = std::make_shared<meta::gui::CheckBox>("Check me");
-    checkBox1->onChange.connect([](bool checked) { meta::println("CheckBox:", checked); });
+    checkBox1->toggled.connect([](bool checked) { meta::println("CheckBox toggled:", checked); });
 
     auto toggle1 = std::make_shared<meta::gui::Toggle>("Toggle me");
     toggle1->toggled.connect([](bool state) { meta::println("Toggle state:", state); });

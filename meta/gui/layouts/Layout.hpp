@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <meta/gui/Theme.hpp>
-#include <meta/gui/Widget.hpp>
+#include <meta/gui/widgets/Widget.hpp>
 #include <vector>
 
 namespace meta::gui
