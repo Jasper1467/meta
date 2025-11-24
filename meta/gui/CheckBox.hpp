@@ -37,14 +37,14 @@ namespace meta::gui
         }
 
         // Signal for check state changes
-        meta::Signal<bool> stateChanged;
+        Signal<bool> onChange;
 
         void setChecked(bool value)
         {
             if (m_checked != value)
             {
                 m_checked = value;
-                stateChanged.emit(m_checked); // emit signal on change
+                onChange.emit(m_checked); // emit signal on change
             }
         }
 

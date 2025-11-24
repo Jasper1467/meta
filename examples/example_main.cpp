@@ -1,14 +1,10 @@
+#include <SDL_ttf.h>
 #include <meta/base/app/Logger.hpp>
-#include <meta/base/app/SettingsManager.hpp>
-#include <meta/base/core/Console.hpp>
-#include <meta/base/core/Format.hpp>
-#include <meta/base/filesystem/Path.hpp>
-#include <meta/base/math/Constants.hpp>
-
 #include <meta/gui/Button.hpp>
 #include <meta/gui/CheckBox.hpp>
-#include <meta/gui/HorizontalLayout.hpp>
 #include <meta/gui/Slider.hpp>
+#include <meta/gui/Tab.hpp>
+#include <meta/gui/TabContainer.hpp>
 #include <meta/gui/TextBox.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Toggle.hpp>
@@ -20,49 +16,64 @@ int main()
     meta::Logger logger;
     logger.setLevel(meta::LogLevel::Debug);
     logger.includeTimestamps(true);
-    logger.setFile("app.log");
+    logger.setFile("tab_demo.log");
 
-    meta::println("Starting GUI demo...");
+    meta::println("Starting Tab System Demo...");
 
-    meta::gui::Window window("Nested Layouts with Themed Widgets", 600, 400);
+    meta::gui::Window window("Tab System Demo", 800, 600); 
 
-    auto theme = std::make_shared<meta::gui::Theme>();
-    window.setTheme(theme);
+    // Create TabContainer
+    auto tabContainer = std::make_shared<meta::gui::TabContainer>(10, 10, 780, 580);
 
-    meta::gui::Button btn1("Button 1");
-    meta::gui::Button btn2("Button 2");
-    meta::gui::Button btn3("Button 3");
-    meta::gui::Button btn4("Button 4");
+    // ---------- Page 1 ----------
+    auto page1 = std::make_shared<meta::gui::VerticalLayout>(10, 10);
 
-    meta::gui::Slider slider1("Volume");
-    meta::gui::TextBox textBox1("Text box");
-    meta::gui::CheckBox checkBox1("Check box");
-    meta::gui::Toggle toggle1("Toggle");
+    auto btn1 = std::make_shared<meta::gui::Button>("Button 1");
+    btn1->clicked.connect([]() { meta::println("Button 1 clicked on Page 1!"); });
 
-    // Connect using the new Signal system
-    btn1.clicked.connect([&]() { meta::println("Button 1 clicked!"); });
-    btn2.clicked.connect([&]() { meta::println("Button 2 clicked!"); });
-    btn3.clicked.connect([&]() { meta::println("Button 3 clicked!"); });
-    btn4.clicked.connect([&]() { meta::println("Button 4 clicked!"); });
+    auto slider1 = std::make_shared<meta::gui::Slider>("Volume");
+    slider1->setValue(50);
+    slider1->valueChanged.connect([](int v) { meta::println("Slider value:", v); });
 
-    auto mainLayout = std::make_shared<meta::gui::VerticalLayout>(10, 10);   // spacing, padding
-    auto nestedLayout = std::make_shared<meta::gui::HorizontalLayout>(5, 5); // spacing, padding
+    page1->addWidget(btn1.get());
+    page1->addWidget(slider1.get());
 
-    nestedLayout->addWidget(&btn3);
-    nestedLayout->addWidget(&btn4);
-    nestedLayout->addWidget(&slider1);
-    nestedLayout->addWidget(&checkBox1);
-    nestedLayout->addWidget(&toggle1);
+    auto tab1 = std::make_shared<meta::gui::Tab>("Controls");
 
-    mainLayout->addWidget(&btn1);
-    mainLayout->addWidget(&btn2);
-    mainLayout->addWidget(&textBox1);
-    mainLayout->addLayout(nestedLayout);
+    // ---------- Page 2 ----------
+    auto page2 = std::make_shared<meta::gui::VerticalLayout>(10, 10);
 
-    window.setLayout(mainLayout);
+    auto textBox1 = std::make_shared<meta::gui::TextBox>("Enter text:");
+    textBox1->textChanged.connect([](const meta::String<>& t) { meta::println("Text changed:", t); });
 
-    // Run the window
-    window.run([&](bool& running) {});
+    auto checkBox1 = std::make_shared<meta::gui::CheckBox>("Check me");
+    checkBox1->onChange.connect([](bool checked) { meta::println("CheckBox:", checked); });
+
+    auto toggle1 = std::make_shared<meta::gui::Toggle>("Toggle me");
+    toggle1->toggled.connect([](bool state) { meta::println("Toggle state:", state); });
+
+    page2->addWidget(textBox1.get());
+    page2->addWidget(checkBox1.get());
+    page2->addWidget(toggle1.get());
+
+    auto tab2 = std::make_shared<meta::gui::Tab>("Settings");
+
+    // Add tabs to container
+    tabContainer->addTab(tab1, page1);
+    tabContainer->addTab(tab2, page2);
+
+    // Connect tab change signal
+    tabContainer->tabChanged.connect([](int index) { meta::println("Active Tab Changed to index:", index); });
+
+    // Set TabContainer as main layout
+    window.setLayout(tabContainer);
+
+    // Main loop
+    window.run(
+        [](bool& running)
+        {
+            // Per-frame logic here if needed
+        });
 
     return 0;
 }

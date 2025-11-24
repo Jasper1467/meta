@@ -23,8 +23,7 @@ namespace meta::gui
             loadFont();
         }
 
-        // Remove previous setOnClick; use Widget's clicked Signal
-        // Example usage: myButton.clicked.connect([]{ ... });
+        Signal<> clicked;
 
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {

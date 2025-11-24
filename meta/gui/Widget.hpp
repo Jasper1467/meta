@@ -68,6 +68,14 @@ namespace meta::gui
             return m_height;
         }
 
+        virtual void updateLayout(int x, int y, int w, int h, float sx = 1.0f, float sy = 1.0f)
+        {
+            // default: widgets simply set their geometry
+            setPosition(x, y);
+            setSize(w, h);
+            setScale(sx, sy);
+        }
+
         void setPosition(int x, int y)
         {
             m_x = x;

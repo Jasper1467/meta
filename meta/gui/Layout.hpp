@@ -1,15 +1,16 @@
 #pragma once
 #include <memory>
+#include <meta/gui/Theme.hpp>
 #include <meta/gui/Widget.hpp>
 #include <vector>
 
 namespace meta::gui
 {
-    class Layout
+    class Layout : public Widget
     {
     public:
         Layout(int spacing = 0, int padding = 0)
-            : m_spacing(spacing), m_padding(padding), m_scaleX(1.0f), m_scaleY(1.0f)
+            : Widget(), m_spacing(spacing), m_padding(padding), m_scaleX(1.0f), m_scaleY(1.0f)
         {
         }
 
@@ -56,6 +57,19 @@ namespace meta::gui
                 l->setScale(sx, sy);
         }
 
+        // Allow applying a theme to the layout and propagate to children
+        // Subclasses may override to react differently.
+        virtual void setTheme(const std::shared_ptr<Theme>& theme)
+        {
+            // propagate to widgets and child layouts
+            for (auto* w : m_widgets)
+                w->setTheme(theme);
+            for (auto& l : m_childLayouts)
+                l->setTheme(theme);
+
+            m_theme = theme;
+        }
+
         virtual void updateLayout(int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f) = 0;
 
         virtual int getWidth() const
@@ -80,11 +94,31 @@ namespace meta::gui
             return static_cast<int>((height + 2 * m_padding) * m_scaleY);
         }
 
+        virtual void render(SDL_Renderer* renderer) override
+        {
+            for (auto* w : m_widgets)
+                w->render(renderer);
+
+            for (auto& l : m_childLayouts)
+                l->render(renderer);
+        }
+
+        virtual void handleEvent(const SDL_Event& e) override
+        {
+            for (auto* w : m_widgets)
+                w->handleEvent(e);
+
+            for (auto& l : m_childLayouts)
+                l->handleEvent(e);
+        }
+
     protected:
         std::vector<Widget*> m_widgets;
         std::vector<std::shared_ptr<Layout>> m_childLayouts;
         int m_spacing;
         int m_padding;
         float m_scaleX, m_scaleY;
+
+        std::shared_ptr<Theme> m_theme;
     };
 } // namespace meta::gui

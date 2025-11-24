@@ -66,6 +66,7 @@ namespace meta::gui
         void setLayout(const std::shared_ptr<Layout>& layout)
         {
             m_layout = layout;
+            m_layout->updateLayout(0, 0, m_width, m_height);
         }
 
         void setTheme(const std::shared_ptr<Theme>& theme)
@@ -109,20 +110,56 @@ namespace meta::gui
             }
         }
 
-        template <typename Func> void run(Func loop)
+        void handleEvent(const SDL_Event& e)
+        {
+            if (m_layout)
+                m_layout->handleEvent(e);
+        }
+
+        template <typename Func> void run(Func perFrame)
         {
             bool running = true;
+            SDL_Event e;
+
             while (running)
             {
-                SDL_GetWindowSize(m_window, &m_width, &m_height);
+                // Handle events
+                while (SDL_PollEvent(&e))
+                {
+                    if (e.type == SDL_QUIT)
+                        running = false;
 
+                    if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                    {
+                        m_width = e.window.data1;
+                        m_height = e.window.data2;
+                    }
+
+                    // Forward to root layout
+                    if (m_layout)
+                        m_layout->handleEvent(e);
+                }
+
+                // Per-frame user logic
+                perFrame(running);
+
+                // Compute scale
+                float scaleX = static_cast<float>(m_width) / m_initialWidth;
+                float scaleY = static_cast<float>(m_height) / m_initialHeight;
+
+                // Update layout positions/sizes
+                if (m_layout)
+                    m_layout->updateLayout(0, 0, m_width, m_height, scaleX, scaleY);
+
+                // Clear screen
                 SDL_SetRenderDrawColor(m_renderer, m_theme->backgroundColor.r, m_theme->backgroundColor.g,
                                        m_theme->backgroundColor.b, m_theme->backgroundColor.a);
                 SDL_RenderClear(m_renderer);
 
-                pollEvents(running);
-                loop(running);
-                renderWidgets();
+                // Render root layout (calls render on all widgets/layouts recursively)
+                if (m_layout)
+                    m_layout->render(m_renderer);
+
                 SDL_RenderPresent(m_renderer);
             }
         }
