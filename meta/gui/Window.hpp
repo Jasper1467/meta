@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include <memory>
 #include <meta/gui/Button.hpp>
 #include <meta/gui/Layout.hpp>
@@ -23,13 +24,33 @@ namespace meta::gui
 
             m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
+            // Initialize SDL_ttf
+            if (TTF_WasInit() == 0)
+                TTF_Init();
+
             m_theme = std::make_shared<Theme>(DEFAULT_THEME);
         }
 
         ~Window()
         {
-            SDL_DestroyRenderer(m_renderer);
-            SDL_DestroyWindow(m_window);
+            // Clean up widgets (if they own SDL resources)
+            for (auto* w : m_widgets)
+                delete w;
+            m_widgets.clear();
+
+            m_layout.reset();
+            m_theme.reset();
+
+            // Destroy SDL resources
+            if (m_renderer)
+                SDL_DestroyRenderer(m_renderer);
+            if (m_window)
+                SDL_DestroyWindow(m_window);
+
+            // Quit SDL_ttf before SDL
+            if (TTF_WasInit())
+                TTF_Quit();
+
             SDL_Quit();
         }
 
@@ -83,7 +104,6 @@ namespace meta::gui
             if (!m_layout)
                 return;
 
-            // Compute scale factors
             float scaleX = static_cast<float>(m_width) / m_initialWidth;
             float scaleY = static_cast<float>(m_height) / m_initialHeight;
 
@@ -123,7 +143,6 @@ namespace meta::gui
 
             while (running)
             {
-                // Handle events
                 while (SDL_PollEvent(&e))
                 {
                     if (e.type == SDL_QUIT)
@@ -135,28 +154,22 @@ namespace meta::gui
                         m_height = e.window.data2;
                     }
 
-                    // Forward to root layout
                     if (m_layout)
                         m_layout->handleEvent(e);
                 }
 
-                // Per-frame user logic
                 perFrame(running);
 
-                // Compute scale
                 float scaleX = static_cast<float>(m_width) / m_initialWidth;
                 float scaleY = static_cast<float>(m_height) / m_initialHeight;
 
-                // Update layout positions/sizes
                 if (m_layout)
                     m_layout->updateLayout(0, 0, m_width, m_height, scaleX, scaleY);
 
-                // Clear screen
                 SDL_SetRenderDrawColor(m_renderer, m_theme->backgroundColor.r, m_theme->backgroundColor.g,
                                        m_theme->backgroundColor.b, m_theme->backgroundColor.a);
                 SDL_RenderClear(m_renderer);
 
-                // Render root layout (calls render on all widgets/layouts recursively)
                 if (m_layout)
                     m_layout->render(m_renderer);
 

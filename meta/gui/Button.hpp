@@ -3,8 +3,10 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <meta/base/core/Console.hpp>
+#include <meta/gui/FontManager.hpp> // include the singleton font manager
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Widget.hpp>
+#include <memory>
 
 namespace meta::gui
 {
@@ -14,12 +16,6 @@ namespace meta::gui
         Button(const meta::String<>& label = "", const std::shared_ptr<Theme>& theme = std::make_shared<Theme>())
             : Widget(theme->minWidth, theme->minHeight, 100, 30), m_label(label), m_theme(theme)
         {
-            if (TTF_WasInit() == 0)
-            {
-                if (TTF_Init() == -1)
-                    meta::errorln("Failed to initialize SDL_ttf: ", TTF_GetError());
-            }
-
             loadFont();
         }
 
@@ -89,7 +85,7 @@ namespace meta::gui
             if (m_hovered && e.type == SDL_MOUSEBUTTONUP)
             {
                 if (m_pressed)
-                    clicked.emit(); // emit signal instead of calling m_onClick
+                    clicked.emit();
                 m_pressed = false;
             }
 
@@ -124,17 +120,11 @@ namespace meta::gui
 
         void loadFont()
         {
-            if (m_font)
-            {
-                TTF_CloseFont(m_font);
-                m_font = nullptr;
-            }
-
             if (m_theme && !m_theme->fontPath.empty())
             {
-                m_font = TTF_OpenFont(m_theme->fontPath.c_str(), m_theme->fontSize);
+                m_font = FontManager::instance().loadFont(m_theme->fontPath.c_str(), m_theme->fontSize);
                 if (!m_font)
-                    meta::errorln("Failed to load font: ", TTF_GetError());
+                    meta::errorln("Failed to load font from FontManager!");
             }
             else
             {

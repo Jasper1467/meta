@@ -4,8 +4,10 @@
 #include <SDL_ttf.h>
 
 #include <meta/base/core/Console.hpp>
+#include <meta/gui/FontManager.hpp> // use the font manager singleton
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Widget.hpp>
+#include <memory>
 
 namespace meta::gui
 {
@@ -16,24 +18,9 @@ namespace meta::gui
                  const std::shared_ptr<Theme>& theme = std::make_shared<Theme>())
             : m_label(label), m_checked(checked), m_theme(theme)
         {
-            if (TTF_WasInit() == 0 && TTF_Init() == -1)
-                meta::errorln("Failed to initialize SDL_ttf: ", TTF_GetError());
-
-            if (!m_theme->fontPath.empty())
-            {
-                m_font = TTF_OpenFont(m_theme->fontPath.c_str(), m_theme->fontSize);
-                if (!m_font)
-                    meta::errorln("Failed to load font: ", TTF_GetError());
-            }
-
+            loadFont();
             m_width = 120;
             m_height = m_theme->minHeight;
-        }
-
-        ~CheckBox()
-        {
-            if (m_font)
-                TTF_CloseFont(m_font);
         }
 
         // Signal for check state changes
@@ -56,19 +43,7 @@ namespace meta::gui
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
             m_theme = theme;
-
-            if (m_font)
-            {
-                TTF_CloseFont(m_font);
-                m_font = nullptr;
-            }
-
-            if (!m_theme->fontPath.empty())
-            {
-                m_font = TTF_OpenFont(m_theme->fontPath.c_str(), m_theme->fontSize);
-                if (!m_font)
-                    meta::errorln("Failed to load font: ", TTF_GetError());
-            }
+            loadFont();
         }
 
         void render(SDL_Renderer* renderer) override
@@ -165,9 +140,7 @@ namespace meta::gui
             if (m_hovered && e.type == SDL_MOUSEBUTTONUP)
             {
                 if (m_pressed)
-                {
                     setChecked(!m_checked); // emits signal automatically
-                }
                 m_pressed = false;
             }
 
@@ -184,5 +157,19 @@ namespace meta::gui
 
         TTF_Font* m_font = nullptr;
         std::shared_ptr<Theme> m_theme;
+
+        void loadFont()
+        {
+            if (m_theme && !m_theme->fontPath.empty())
+            {
+                m_font = FontManager::instance().loadFont(m_theme->fontPath.c_str(), m_theme->fontSize);
+                if (!m_font)
+                    meta::errorln("Failed to load font from FontManager!");
+            }
+            else
+            {
+                meta::errorln("No font path specified in theme.");
+            }
+        }
     };
 } // namespace meta::gui

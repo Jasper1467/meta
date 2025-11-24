@@ -4,6 +4,7 @@
 #include <SDL_ttf.h>
 #include <meta/base/core/Console.hpp>
 #include <meta/base/core/String.hpp>
+#include <meta/gui/FontManager.hpp>
 #include <meta/gui/TextUtils.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Widget.hpp>
@@ -17,12 +18,9 @@ namespace meta::gui
             : Widget(DEFAULT_THEME.minWidth, DEFAULT_THEME.minHeight, DEFAULT_THEME.minWidth, DEFAULT_THEME.minHeight),
               m_label(label), m_text(initialText)
         {
-            if (TTF_WasInit() == 0)
-                TTF_Init();
-
-            m_font = TTF_OpenFont(DEFAULT_THEME.fontPath.c_str(), DEFAULT_THEME.fontSize);
+            m_font = FontManager::instance().loadFont(DEFAULT_THEME.fontPath.c_str(), DEFAULT_THEME.fontSize);
             if (!m_font)
-                meta::errorln("Failed to load font: ", TTF_GetError());
+                meta::errorln("Failed to load font from FontManager!");
         }
 
         // Signal emitted whenever the text changes
@@ -31,6 +29,8 @@ namespace meta::gui
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
             m_theme = theme;
+            if (m_theme && !m_theme->fontPath.empty())
+                m_font = FontManager::instance().loadFont(m_theme->fontPath.c_str(), m_theme->fontSize);
         }
 
         void setText(const meta::String<>& text)

@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <meta/base/core/String.hpp>
+#include <meta/gui/FontManager.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Transition.hpp>
 #include <meta/gui/Widget.hpp>
@@ -16,6 +17,8 @@ namespace meta::gui
             : Widget(0, 0, 60, 28), m_label(label), m_state(initialState),
               m_knobTransition(initialState ? 1.0f : 0.0f, initialState ? 1.0f : 0.0f, 0.15f)
         {
+            if (!m_label.empty())
+                m_font = FontManager::instance().loadFont(DEFAULT_THEME.fontPath.c_str(), DEFAULT_THEME.fontSize);
         }
 
         // Signal for toggle state changes
@@ -24,6 +27,8 @@ namespace meta::gui
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
             m_theme = theme;
+            if (!m_label.empty() && m_theme && !m_theme->fontPath.empty())
+                m_font = FontManager::instance().loadFont(m_theme->fontPath.c_str(), m_theme->fontSize);
         }
 
         void setState(bool state)

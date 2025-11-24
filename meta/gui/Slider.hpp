@@ -6,6 +6,7 @@
 #include <meta/base/core/String.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Widget.hpp>
+#include <meta/gui/FontManager.hpp>
 
 namespace meta::gui
 {
@@ -13,15 +14,10 @@ namespace meta::gui
     {
     public:
         Slider(const meta::String<>& name = "", int min = 0, int max = 100, int value = 0)
-            : Widget(DEFAULT_THEME.minWidth, DEFAULT_THEME.minHeight, 200, 30), m_name(name), m_min(min), m_max(max),
-              m_value(value)
+            : Widget(DEFAULT_THEME.minWidth, DEFAULT_THEME.minHeight, 200, 30),
+              m_name(name), m_min(min), m_max(max), m_value(value)
         {
-            if (TTF_WasInit() == 0)
-                TTF_Init();
-
-            m_font = TTF_OpenFont(DEFAULT_THEME.fontPath.c_str(), DEFAULT_THEME.fontSize);
-            if (!m_font)
-                meta::errorln("Failed to load font: ", TTF_GetError());
+            loadFont();
         }
 
         // Signal for value changes
@@ -30,6 +26,7 @@ namespace meta::gui
         void setTheme(const std::shared_ptr<Theme>& theme) override
         {
             m_theme = theme;
+            loadFont();
         }
 
         void setValue(int val)
@@ -54,7 +51,6 @@ namespace meta::gui
 
             const Theme& theme = m_theme ? *m_theme : DEFAULT_THEME;
 
-            // Calculate label height
             int labelHeight = 0;
             if (m_font && !m_name.empty())
             {
@@ -139,5 +135,20 @@ namespace meta::gui
             SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(renderer, &rect);
         }
+
+        void loadFont()
+        {
+            if (m_theme && !m_theme->fontPath.empty())
+            {
+                m_font = FontManager::instance().loadFont(m_theme->fontPath.c_str(), m_theme->fontSize);
+                if (!m_font)
+                    meta::errorln("Failed to load font from FontManager!");
+            }
+            else
+            {
+                meta::errorln("No font path specified in theme.");
+            }
+        }
     };
 } // namespace meta::gui
+

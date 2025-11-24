@@ -3,12 +3,13 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <memory>
+#include <meta/base/core/Console.hpp>
+#include <meta/gui/FontManager.hpp>
 #include <meta/gui/Layout.hpp>
 #include <meta/gui/Tab.hpp>
 #include <meta/gui/Theme.hpp>
 #include <meta/gui/Widget.hpp>
 #include <vector>
-#include <meta/base/core/Console.hpp>
 
 namespace meta::gui
 {
@@ -18,29 +19,16 @@ namespace meta::gui
         TabContainer(int x = 0, int y = 0, int w = 400, int h = 300)
             : Layout(0, 0), m_x(x), m_y(y), m_width(w), m_height(h)
         {
-            if (TTF_WasInit() == 0)
-            {
-                if (TTF_Init() == -1)
-                    meta::errorln("Failed to initialize SDL_ttf: ", TTF_GetError());
-            }
-
             loadFont(DEFAULT_THEME);
-        }
-
-        ~TabContainer()
-        {
-            if (m_font)
-            {
-                TTF_CloseFont(m_font);
-                m_font = nullptr;
-            }
         }
 
         Signal<int> tabChanged;
 
         void addTab(const std::shared_ptr<Tab>& tab, const std::shared_ptr<Widget>& page)
         {
-            tab->setTheme(m_theme);
+            if (m_theme)
+                tab->setTheme(m_theme);
+
             tab->setFont(m_font);
 
             m_tabs.push_back(tab);
@@ -157,17 +145,11 @@ namespace meta::gui
     private:
         void loadFont(const Theme& theme)
         {
-            if (m_font)
-            {
-                TTF_CloseFont(m_font);
-                m_font = nullptr;
-            }
-
             if (!theme.fontPath.empty())
             {
-                m_font = TTF_OpenFont(theme.fontPath.c_str(), theme.fontSize);
+                m_font = FontManager::instance().loadFont(theme.fontPath.c_str(), theme.fontSize);
                 if (!m_font)
-                    meta::errorln("Failed to load font: ", TTF_GetError());
+                    meta::errorln("Failed to load font from FontManager!");
             }
             else
             {
@@ -188,4 +170,3 @@ namespace meta::gui
         bool m_visible = true;
     };
 } // namespace meta::gui
-
