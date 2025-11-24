@@ -1,4 +1,3 @@
-#include <SDL_ttf.h>
 #include <meta/base/app/Logger.hpp>
 #include <meta/gui/Button.hpp>
 #include <meta/gui/CheckBox.hpp>

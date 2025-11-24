@@ -1,8 +1,8 @@
 #pragma once
 #include <SDL_ttf.h>
-#include <unordered_map>
-#include <string>
 #include <meta/base/core/Console.hpp>
+#include <string>
+#include <unordered_map>
 
 namespace meta::gui
 {
@@ -18,25 +18,37 @@ namespace meta::gui
         // Load font by path and size, cached to avoid reopening multiple times
         TTF_Font* loadFont(const std::string& path, int size)
         {
-            // Key: path + size
-            std::string key = path + ":" + std::to_string(size);
-            if (m_fonts.count(key))
-                return m_fonts[key];
+            auto key = path + "#" + std::to_string(size);
+            auto it = m_fonts.find(key);
+            if (it != m_fonts.end())
+                return it->second;
+
+            if (path.empty())
+            {
+                meta::errorln("FontManager: font path is empty, cannot load font.");
+                return nullptr;
+            }
 
             TTF_Font* font = TTF_OpenFont(path.c_str(), size);
             if (!font)
-                meta::errorln("Failed to load font: ", TTF_GetError());
-            else
-                m_fonts[key] = font;
+            {
+                meta::errorln("FontManager: failed to load font: ", TTF_GetError());
+                return nullptr;
+            }
 
+            m_fonts[key] = font;
             return font;
         }
 
         // Close all fonts on shutdown
         ~FontManager()
         {
-            for (auto& [k, font] : m_fonts)
-                TTF_CloseFont(font);
+            for (auto& pair : m_fonts)
+            {
+                if (pair.second)
+                    TTF_CloseFont(pair.second);
+            }
+
             m_fonts.clear();
 
             if (TTF_WasInit())
